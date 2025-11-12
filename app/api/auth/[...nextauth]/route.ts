@@ -1,47 +1,51 @@
 import NextAuth from "next-auth"
-import Credentials from "next-auth/providers/credentials"
-import { PrismaAdapter } from "@auth/prisma-adapter"
+import CredentialsProvider from "next-auth/providers/credentials"
+import { PrismaAdapter } from "@next-auth/prisma-adapter"
 import { prisma } from "@/lib/prisma"
-import bcrypt from "bcryptjs"
+import bcrypt from "bcrypt"
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+const handler = NextAuth({
   adapter: PrismaAdapter(prisma),
   providers: [
-    Credentials({
+    CredentialsProvider({
+      name: "Credentials",
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
-          return null
+          throw new Error("Invalid credentials")
         }
 
         const user = await prisma.user.findUnique({
           where: { email: credentials.email },
         })
 
-        if (!user || !user.password) {
-          return null
+        if (!user) {
+          throw new Error("User not found")
         }
 
-        const isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-        if (!isPasswordValid) {
-          return null
+        if (!user.password) {
+          throw new Error("Invalid credentials")
+        }
+
+        const passwordValid = await bcrypt.compare(credentials.password, user.password)
+
+        if (!passwordValid) {
+          throw new Error("Invalid credentials")
         }
 
         return {
           id: user.id,
           email: user.email,
           name: user.name,
-          image: user.image,
         }
       },
     }),
   ],
   pages: {
-    signIn: "/login",
-    error: "/login",
+    signIn: "/auth/login",
   },
   callbacks: {
     async jwt({ token, user }) {
@@ -61,3 +65,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     strategy: "jwt",
   },
 })
+
+export { handler as GET, handler as POST }
