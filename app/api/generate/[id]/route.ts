@@ -3,7 +3,10 @@ import { getServerSession } from "next-auth"
 import { prisma } from "@/lib/prisma"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
 
-export async function DELETE({ params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
   try {
     // 1. Authenticate the user
     const session = await getServerSession(authOptions)
@@ -20,7 +23,9 @@ export async function DELETE({ params }: { params: { id: string } }) {
       return NextResponse.json({ message: "User not found" }, { status: 404 })
     }
 
-    const { id } = params
+    // 2. Await the params promise
+    const { id } = await params
+    
     if (!id) {
       return NextResponse.json({ message: "Generation ID is required" }, { status: 400 })
     }
@@ -38,7 +43,7 @@ export async function DELETE({ params }: { params: { id: string } }) {
     }
 
     await prisma.generation.delete({
-      where: { id: id },
+      where: { id },
     })
 
     return NextResponse.json({ message: "Generation deleted successfully" }, { status: 200 })
