@@ -94,7 +94,7 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
 />
 
 
-        <Button type="submit" disabled={loading || credits <= 0} className="px-8 h-12 rounded-2xl">
+        <Button type="submit" disabled={loading || credits <= 0} className="px-8 h-12 rounded-2xl cursor-pointer">
           {loading ? "Generating..." : "Generate"}
         </Button>
       </div>

@@ -130,7 +130,7 @@ export default function DashboardPage() {
             <Button 
               variant="secondary" 
               size="sm" 
-              className="w-full mt-3 bg-white/20 hover:bg-white/30 text-white border-0"
+              className="cursor-pointer w-full mt-3 bg-white/20 hover:bg-white/30 text-white border-0"
             >
               <CreditCard className="h-4 w-4 mr-2" />
               Buy Credits
@@ -179,7 +179,7 @@ export default function DashboardPage() {
               </div>
               
               <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="cursor-pointer">
                   <History className="h-4 w-4 mr-2" />
                   Recent
                 </Button>
