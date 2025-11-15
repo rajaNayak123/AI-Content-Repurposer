@@ -1,52 +1,129 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY!)
+function extractText(result: any): string {
+  if (!result?.candidates?.length) return "";
+
+  const candidate = result.candidates[0];
+
+  if (candidate.content?.parts?.length) {
+    for (const part of candidate.content.parts) {
+      if (typeof part?.text === "string") {
+        return part.text.trim();
+      }
+    }
+  }
+
+  const legacyParts = Array.isArray(candidate.content)
+    ? candidate.content
+    : [candidate.content];
+
+  for (const part of legacyParts) {
+    if (typeof part?.text === "string") {
+      return part.text.trim();
+    }
+  }
+
+  return "";
+}
 
 export async function generateContent(sourceText: string) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("Missing GEMINI_API_KEY");
 
-    const systemPrompt = `You are an expert social media marketing assistant. Based on the following text, generate a JSON object with three keys:
-- 'tweets': an array of exactly 5 short, catchy tweets (each under 280 characters) with relevant hashtags
-- 'linkedin': a professional LinkedIn post (around 150 words) suitable for sharing with a professional network
-- 'email': a concise email newsletter summary (around 100 words)
+    const ai = new GoogleGenAI({ apiKey });
 
-Return ONLY valid JSON, no additional text.`
+    const systemPrompt = ` You are an expert social media marketing assistant and content repurposing specialist. Your task is to take a piece of source content and transform it into a structured JSON object containing assets for different platforms.
 
-    const prompt = `${systemPrompt}\n\nContent to repurpose:\n\n${sourceText}`
+Based only on the source content I provide below, generate a single, valid JSON object with the following keys: tweets, linkedin, and email.
 
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    const text = response.text()
+Key Requirements:
 
-    // Parse the response
-    const jsonMatch = text.match(/\{[\s\S]*\}/)
+"tweets":
+
+Must be an array containing exactly 5 unique tweets.
+
+Each tweet must be under 280 characters.
+
+The tone should be engaging, catchy, and high-energy.
+
+Must include 2-3 relevant, high-traffic hashtags.
+
+Must include at least one relevant emoji.
+
+Each of the 5 tweets must highlight a different, unique angle or key takeaway from the source content (e.g., one tweet could be a surprising stat, one a "how-to" tip, one a question to the audience, etc.).
+
+"linkedin":
+
+Must be a single string containing a professional LinkedIn post (approximately 150 words).
+
+It must start with a strong, compelling hook to stop the scroll.
+
+The tone must be polished, insightful, and suitable for a professional or B2B audience.
+
+It should summarize the core insights, provide clear value, and position the content as a must-read.
+
+It must end with a clear call-to-action (CTA) or an engaging question to encourage comments and discussion.
+
+"email":
+
+Must be a single string containing a concise email newsletter summary (approximately 100 words).
+
+The style should be clear, compelling, and scannable (easy to read).
+
+It should act as a "teaser," summarizing the main idea and building curiosity to make the reader want to click a link to the full content.
+
+It should clearly state why this content is valuable to the reader.
+
+Output Constraints:
+
+You must return ONLY the raw, valid JSON object.
+
+Your response must start with { and end with }.
+
+Do NOT include any introductory text, explanations, or markdown formatting like json ...
+`;
+
+    const prompt = `${systemPrompt}\n\nContent:\n${sourceText}`;
+
+    const result = await ai.models.generateContent({
+      model: "gemini-2.0-flash",
+      contents: prompt,
+    });
+
+    // Extract text safely
+    let raw = extractText(result);
+
+    if (!raw) {
+      console.error("Gemini raw result:", JSON.stringify(result, null, 2));
+      throw new Error("Empty response from Gemini");
+    }
+
+    // Clean markdown fences
+    const cleaned = raw
+      .replace(/^```json/, "")
+      .replace(/^```/, "")
+      .replace(/```$/, "")
+      .trim();
+
+    const jsonMatch = cleaned.match(/\{[\s\S]*\}$/);
     if (!jsonMatch) {
-      throw new Error("Failed to parse AI response")
+      console.error("Invalid AI output:", cleaned);
+      throw new Error("AI did not return JSON");
     }
 
-    const parsedResult = JSON.parse(jsonMatch[0])
+    const data = JSON.parse(jsonMatch[0]);
 
-    // Validate structure
-    if (!Array.isArray(parsedResult.tweets) || parsedResult.tweets.length !== 5) {
-      throw new Error("Invalid tweets format")
-    }
+    if (!Array.isArray(data.tweets) || data.tweets.length !== 5)
+      throw new Error("Tweets invalid");
 
-    if (typeof parsedResult.linkedin !== "string" || !parsedResult.linkedin) {
-      throw new Error("Invalid LinkedIn post")
-    }
+    if (typeof data.linkedin !== "string") throw new Error("LinkedIn invalid");
 
-    if (typeof parsedResult.email !== "string" || !parsedResult.email) {
-      throw new Error("Invalid email summary")
-    }
+    if (typeof data.email !== "string") throw new Error("Email invalid");
 
-    return {
-      tweets: parsedResult.tweets,
-      linkedin: parsedResult.linkedin,
-      email: parsedResult.email,
-    }
-  } catch (error) {
-    console.error("AI generation error:", error)
-    throw new Error("Failed to generate content")
+    return data;
+  } catch (err: any) {
+    console.error("Gemini error:", err);
+    throw new Error(err.message || "Failed to generate content");
   }
 }
