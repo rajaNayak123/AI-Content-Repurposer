@@ -6,7 +6,11 @@ import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Sparkles, History, CreditCard, LogOut, Settings, Home, ChevronRight, Twitter, Linkedin, Mail, Copy, Trash2, ExternalLink, Calendar, Search, Filter } from "lucide-react"
+import { 
+  Sparkles, History, CreditCard, LogOut, Settings, Home, ChevronRight, 
+  Twitter, Linkedin, Mail, Copy, Trash2, ExternalLink, Calendar, Search, 
+  Filter, Edit, Check 
+} from "lucide-react"
 import { Input } from "@/components/ui/input"
 
 interface HistoryItem {
@@ -25,6 +29,7 @@ export default function HistoryPage() {
   const [error, setError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null) // State to track editing
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -59,6 +64,59 @@ export default function HistoryPage() {
     navigator.clipboard.writeText(text)
     setCopiedId(id)
     setTimeout(() => setCopiedId(null), 2000)
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
+      return
+    }
+
+    try {
+      setError("")
+      const response = await fetch(`/api/generations/${id}`, {
+        method: "DELETE",
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.message || "Failed to delete item")
+      }
+
+      setGenerations((prev) => prev.filter((item) => item.id !== id))
+    } catch (err: any) {
+      setError(err.message || "An error occurred while deleting.")
+    }
+  }
+
+  const handleTextChange = (
+    itemId: string,
+    field: "resultTweets" | "resultLinkedin" | "resultEmail",
+    value: string,
+    index?: number
+  ) => {
+    setGenerations((prev) =>
+      prev.map((gen) => {
+        if (gen.id !== itemId) {
+          return gen
+        }
+
+        if (field === "resultTweets" && index !== undefined) {
+          const newTweets = [...gen.resultTweets]
+          newTweets[index] = value
+          return { ...gen, resultTweets: newTweets }
+        }
+
+        if (field === "resultLinkedin") {
+          return { ...gen, resultLinkedin: value }
+        }
+
+        if (field === "resultEmail") {
+          return { ...gen, resultEmail: value }
+        }
+
+        return gen
+      })
+    )
   }
 
   const filteredGenerations = generations.filter(item =>
@@ -113,7 +171,7 @@ export default function HistoryPage() {
           </Link>
 
           <Link 
-            href="/dashboard/history" 
+            href="/history" 
             className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-medium group"
           >
             <History className="h-5 w-5" />
@@ -122,7 +180,7 @@ export default function HistoryPage() {
           </Link>
 
           <Link 
-            href="/dashboard/settings" 
+            href="/settings" 
             className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors group"
           >
             <Settings className="h-5 w-5" />
@@ -131,7 +189,7 @@ export default function HistoryPage() {
           </Link>
         </nav>
 
-        {/* Credits Card */}
+        {/* Credits Card (Assuming credits are fetched separately or static for this view) */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <div className="p-4 rounded-xl bg-linear-to-br from-emerald-600 to-teal-600 text-white mb-4">
             <div className="flex items-center justify-between mb-2">
@@ -139,8 +197,9 @@ export default function HistoryPage() {
               <Sparkles className="h-4 w-4" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">5</span>
-              <span className="text-sm opacity-80">/ 5 free</span>
+              {/* Note: This credit count is static. For dynamic, it would need another fetch */}
+              <span className="text-3xl font-bold">...</span>
+              <span className="text-sm opacity-80"></span>
             </div>
             <Button 
               variant="secondary" 
@@ -218,7 +277,7 @@ export default function HistoryPage() {
             </div>
           )}
 
-          {filteredGenerations.length === 0 ? (
+          {filteredGenerations.length === 0 && !loading ? (
             <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
               <CardContent className="py-16">
                 <div className="text-center max-w-md mx-auto">
@@ -226,10 +285,12 @@ export default function HistoryPage() {
                     <History className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    No history yet
+                    {searchQuery ? "No results found" : "No history yet"}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                    Start generating content to see your history here
+                    {searchQuery 
+                      ? "Try a different search query." 
+                      : "Start generating content to see your history here."}
                   </p>
                   <Link href="/dashboard">
                     <Button className="bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
@@ -246,9 +307,9 @@ export default function HistoryPage() {
                 <Card key={item.id} className="border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all">
                   <CardHeader className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
                     <div className="flex items-start justify-between">
-                      <div className="flex-1">
+                      <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
-                          <ExternalLink className="h-4 w-4 text-gray-400" />
+                          <ExternalLink className="h-4 w-4 text-gray-400 shrink-0" />
                           <CardTitle className="text-base font-medium text-gray-900 dark:text-white truncate">
                             {item.sourceUrl}
                           </CardTitle>
@@ -258,14 +319,18 @@ export default function HistoryPage() {
                           {new Date(item.createdAt).toLocaleString()}
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30">
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handleDelete(item.id)} // Added onClick
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </CardHeader>
 
                   <CardContent className="pt-6 space-y-6">
-                    {/* Tweets */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/30 flex items-center justify-center">
@@ -274,28 +339,39 @@ export default function HistoryPage() {
                         <h4 className="font-semibold text-gray-900 dark:text-white">Tweets ({item.resultTweets.length})</h4>
                       </div>
                       <div className="space-y-2">
-                        {item.resultTweets.map((tweet: string, idx: number) => (
-                          <div key={idx} className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                            <p className="text-sm text-gray-700 dark:text-gray-300 pr-10">{tweet}</p>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleCopy(tweet, `tweet-${item.id}-${idx}`)}
-                              className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <Copy className="h-4 w-4" />
-                            </Button>
-                            {copiedId === `tweet-${item.id}-${idx}` && (
-                              <span className="absolute top-2 right-12 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                Copied!
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                        {item.resultTweets.map((tweet: string, idx: number) => {
+                          const editKey = `tweet-${item.id}-${idx}`
+                          const isEditing = editingId === editKey
+
+                          return (
+                            <div key={idx} className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                              {isEditing ? (
+                                <textarea
+                                  value={tweet}
+                                  onChange={(e) => handleTextChange(item.id, 'resultTweets', e.target.value, idx)}
+                                  className="text-sm text-gray-700 dark:text-gray-300 w-full min-h-[100px] rounded-md border p-2 bg-white dark:bg-gray-700"
+                                />
+                              ) : (
+                                <p className="text-sm text-gray-700 dark:text-gray-300 pr-24">{tweet}</p>
+                              )}
+                              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(isEditing ? null : editKey)}>
+                                  {isEditing ? <Check className="h-4 w-4 text-emerald-600" /> : <Edit className="h-4 w-4" />}
+                                </Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => handleCopy(tweet, editKey)}>
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              {copiedId === editKey && (
+                                <span className="absolute top-3 right-24 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                  Copied!
+                                </span>
+                              )}
+                            </div>
+                          )
+                        })}
                       </div>
                     </div>
-
-                    {/* LinkedIn */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center">
@@ -304,24 +380,38 @@ export default function HistoryPage() {
                         <h4 className="font-semibold text-gray-900 dark:text-white">LinkedIn Post</h4>
                       </div>
                       <div className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-10">{item.resultLinkedin}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopy(item.resultLinkedin, `linkedin-${item.id}`)}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        {copiedId === `linkedin-${item.id}` && (
-                          <span className="absolute top-2 right-12 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                            Copied!
-                          </span>
-                        )}
+                        {(() => {
+                          const editKey = `linkedin-${item.id}`
+                          const isEditing = editingId === editKey
+                          return (
+                            <>
+                              {isEditing ? (
+                                <textarea
+                                  value={item.resultLinkedin}
+                                  onChange={(e) => handleTextChange(item.id, 'resultLinkedin', e.target.value)}
+                                  className="text-sm text-gray-700 dark:text-gray-300 w-full min-h-[150px] rounded-md border p-2 bg-white dark:bg-gray-700 whitespace-pre-wrap"
+                                />
+                              ) : (
+                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-24">{item.resultLinkedin}</p>
+                              )}
+                              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(isEditing ? null : editKey)}>
+                                  {isEditing ? <Check className="h-4 w-4 text-emerald-600" /> : <Edit className="h-4 w-4" />}
+                                </Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => handleCopy(item.resultLinkedin, editKey)}>
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              {copiedId === editKey && (
+                                <span className="absolute top-3 right-24 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                  Copied!
+                                </span>
+                              )}
+                            </>
+                          )
+                        })()}
                       </div>
                     </div>
-
-                    {/* Email */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950/30 flex items-center justify-center">
@@ -330,20 +420,36 @@ export default function HistoryPage() {
                         <h4 className="font-semibold text-gray-900 dark:text-white">Email Summary</h4>
                       </div>
                       <div className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-10">{item.resultEmail}</p>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => handleCopy(item.resultEmail, `email-${item.id}`)}
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        {copiedId === `email-${item.id}` && (
-                          <span className="absolute top-2 right-12 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                            Copied!
-                          </span>
-                        )}
+                        {(() => {
+                          const editKey = `email-${item.id}`
+                          const isEditing = editingId === editKey
+                          return (
+                            <>
+                              {isEditing ? (
+                                <textarea
+                                  value={item.resultEmail}
+                                  onChange={(e) => handleTextChange(item.id, 'resultEmail', e.target.value)}
+                                  className="text-sm text-gray-700 dark:text-gray-300 w-full min-h-[150px] rounded-md border p-2 bg-white dark:bg-gray-700 whitespace-pre-wrap"
+                                />
+                              ) : (
+                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-24">{item.resultEmail}</p>
+                              )}
+                              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(isEditing ? null : editKey)}>
+                                  {isEditing ? <Check className="h-4 w-4 text-emerald-600" /> : <Edit className="h-4 w-4" />}
+                                </Button>
+                                <Button variant="ghost" size="icon-sm" onClick={() => handleCopy(item.resultEmail, editKey)}>
+                                  <Copy className="h-4 w-4" />
+                                </Button>
+                              </div>
+                              {copiedId === editKey && (
+                                <span className="absolute top-3 right-24 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                  Copied!
+                                </span>
+                              )}
+                            </>
+                          )
+                        })()}
                       </div>
                     </div>
                   </CardContent>
