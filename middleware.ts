@@ -7,17 +7,18 @@ export async function middleware(req: NextRequest) {
     secret: process.env.NEXTAUTH_SECRET,
   })
 
-  // Protected routes
-  const protectedPaths = ["/dashboard", "/history"]
-  const isProtectedPath = protectedPaths.some((path) => req.nextUrl.pathname.startsWith(path))
+  const protectedPaths = ["/dashboard", "/history", "/settings"]
+  const { pathname } = req.nextUrl
 
-  if (isProtectedPath && !token) {
-    return NextResponse.redirect(new URL("/auth/login", req.url))
+  if (protectedPaths.some((path) => pathname.startsWith(path)) && !token) {
+    const loginUrl = new URL("/auth/login", req.url)
+    loginUrl.searchParams.set("callbackUrl", req.url) 
+    return NextResponse.redirect(loginUrl)
   }
 
   return NextResponse.next()
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/history/:path*"],
+  matcher: ["/dashboard/:path*", "/history/:path*", "/settings/:path*", "/dashboard", "/history", "/settings"],
 }
