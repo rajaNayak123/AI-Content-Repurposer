@@ -62,7 +62,7 @@ model Generation {
   resultTweets   Json     // Array of 5 tweets
   resultLinkedin String   // LinkedIn post
   resultEmail    String   // Email summary
-
+  resultImagePrompts Json? // Array of 3 image prompts
   userId         String
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

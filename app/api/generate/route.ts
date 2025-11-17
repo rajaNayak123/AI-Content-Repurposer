@@ -135,6 +135,7 @@ export async function POST(request: NextRequest) {
         resultTweets: aiResult.tweets || "",
         resultLinkedin: aiResult.linkedin || "",
         resultEmail: aiResult.email || "",
+        resultImagePrompts: aiResult.imagePrompts || [],
         userId: user.id,
       },
     })

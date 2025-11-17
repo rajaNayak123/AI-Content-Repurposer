@@ -9,6 +9,7 @@ interface ResultsDisplayProps {
     tweets: string[]
     linkedin: string
     email: string
+    imagePrompts: string[]
   }
 }
 
@@ -39,6 +40,13 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
 
   const handleEmailChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditedResults(prev => ({ ...prev, email: e.target.value }))
+  }
+
+  const handleImagePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>, index: number) => {
+    const currentPrompts = editedResults.imagePrompts || [];
+    const newPrompts = [...currentPrompts]
+    newPrompts[index] = e.target.value
+    setEditedResults(prev => ({ ...prev, imagePrompts: newPrompts }))
   }
 
   return (
@@ -129,6 +137,39 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
               </Button>
             </div>
           </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>AI Image Prompts</CardTitle>
+          <CardDescription>Detailed prompts for Midjourney, DALL-E, or Stable Diffusion</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {editedResults.imagePrompts?.map((prompt, idx) => {
+            const editKey = `prompt-${idx}`
+            const isEditing = editingKey === editKey
+            return (
+              <div key={idx} className="bg-muted p-4 rounded-lg flex justify-between items-start gap-4">
+                {isEditing ? (
+                  <textarea
+                    value={prompt}
+                    onChange={(e) => handleImagePromptChange(e, idx)}
+                    className="flex-1 text-sm w-full min-h-20px rounded-md border p-2 bg-background dark:bg-gray-800"
+                  />
+                ) : (
+                  <p className="flex-1 text-sm font-mono text-gray-700 dark:text-gray-300">{prompt}</p>
+                )}
+                <div className="flex flex-col gap-2 shrink-0">
+                  <Button variant="outline" size="sm" onClick={() => setEditingKey(isEditing ? null : editKey)}>
+                    {isEditing ? "Save" : "Edit"}
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(prompt, editKey)}>
+                    {copied === editKey ? "Copied!" : "Copy"}
+                  </Button>
+                </div>
+              </div>
+            )
+          })}
         </CardContent>
       </Card>
     </div>

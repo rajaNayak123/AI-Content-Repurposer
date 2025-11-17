@@ -35,54 +35,42 @@ export async function generateContent(sourceText: string) {
 
     const systemPrompt = ` You are an expert social media marketing assistant and content repurposing specialist. Your task is to take a piece of source content and transform it into a structured JSON object containing assets for different platforms.
 
-Based only on the source content I provide below, generate a single, valid JSON object with the following keys: tweets, linkedin, and email.
-
-Key Requirements:
-
-"tweets":
-
-Must be an array containing exactly 5 unique tweets.
-
-Each tweet must be under 280 characters.
-
-The tone should be engaging, catchy, and high-energy.
-
-Must include 2-3 relevant, high-traffic hashtags.
-
-Must include at least one relevant emoji.
-
-Each of the 5 tweets must highlight a different, unique angle or key takeaway from the source content (e.g., one tweet could be a surprising stat, one a "how-to" tip, one a question to the audience, etc.).
-
-"linkedin":
-
-Must be a single string containing a professional LinkedIn post (approximately 150 words).
-
-It must start with a strong, compelling hook to stop the scroll.
-
-The tone must be polished, insightful, and suitable for a professional or B2B audience.
-
-It should summarize the core insights, provide clear value, and position the content as a must-read.
-
-It must end with a clear call-to-action (CTA) or an engaging question to encourage comments and discussion.
-
-"email":
-
-Must be a single string containing a concise email newsletter summary (approximately 100 words).
-
-The style should be clear, compelling, and scannable (easy to read).
-
-It should act as a "teaser," summarizing the main idea and building curiosity to make the reader want to click a link to the full content.
-
-It should clearly state why this content is valuable to the reader.
-
-Output Constraints:
-
-You must return ONLY the raw, valid JSON object.
-
-Your response must start with { and end with }.
-
-Do NOT include any introductory text, explanations, or markdown formatting like json ...
-`;
+    Based only on the source content I provide below, generate a single, valid JSON object with the following keys: tweets, linkedin, email, and imagePrompts.
+    
+    Key Requirements:
+    
+    "tweets":
+    Must be an array containing exactly 5 unique tweets.
+    Each tweet must be under 280 characters.
+    The tone should be engaging, catchy, and high-energy.
+    Must include 2-3 relevant, high-traffic hashtags.
+    Must include at least one relevant emoji.
+    Each of the 5 tweets must highlight a different, unique angle or key takeaway from the source content.
+    
+    "linkedin":
+    Must be a single string containing a professional LinkedIn post (approximately 150 words).
+    It must start with a strong, compelling hook to stop the scroll.
+    The tone must be polished, insightful, and suitable for a professional or B2B audience.
+    It should summarize the core insights, provide clear value, and position the content as a must-read.
+    It must end with a clear call-to-action (CTA) or an engaging question.
+    
+    "email":
+    Must be a single string containing a concise email newsletter summary (approximately 100 words).
+    The style should be clear, compelling, and scannable.
+    It should act as a "teaser," summarizing the main idea and building curiosity.
+    It should clearly state why this content is valuable to the reader.
+    
+    "imagePrompts":
+    Must be an array containing exactly 3 distinct image generation prompts.
+    Each prompt should be highly descriptive, focusing on visual elements, lighting, artistic style (e.g., "photorealistic", "minimalist", "cyberpunk"), and composition.
+    Designed to be copy-pasted into tools like Midjourney, DALL-E, or Stable Diffusion.
+    Example: "A futuristic workspace with glowing blue neon lights, cinematic lighting, hyper-realistic, 8k --ar 16:9"
+    
+    Output Constraints:
+    You must return ONLY the raw, valid JSON object.
+    Your response must start with { and end with }.
+    Do NOT include any introductory text, explanations, or markdown formatting like json ...
+    `;
 
     const prompt = `${systemPrompt}\n\nContent:\n${sourceText}`;
 
@@ -120,6 +108,13 @@ Do NOT include any introductory text, explanations, or markdown formatting like 
     if (typeof data.linkedin !== "string") throw new Error("LinkedIn invalid");
 
     if (typeof data.email !== "string") throw new Error("Email invalid");
+
+    if (!Array.isArray(data.imagePrompts) || data.imagePrompts.length !== 3) {
+      // Fallback to empty array if AI fails this part, or throw error. 
+      // Let's safeguard it by defaulting if missing, but logging it.
+      console.warn("Image prompts missing or invalid, defaulting to empty.");
+      data.imagePrompts = data.imagePrompts || [];
+   }
 
     return data;
   } catch (err: any) {

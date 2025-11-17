@@ -23,6 +23,11 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     })
 
+    const safeGenerations = generations.map((gen) => ({
+      ...gen,
+      resultImagePrompts: gen.resultImagePrompts ?? [], 
+    }))
+
     return NextResponse.json({ generations, credits: user.credits }, { status: 200 })
   } catch (error) {
     console.error("Get generations error:", error)

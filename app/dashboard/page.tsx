@@ -14,6 +14,7 @@ interface GenerationResult {
   tweets: string[]
   linkedin: string
   email: string
+  imagePrompts: string[]
 }
 
 export default function DashboardPage() {
