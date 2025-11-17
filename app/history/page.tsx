@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { 
   Sparkles, History, CreditCard, LogOut, Settings, Home, ChevronRight, 
   Twitter, Linkedin, Mail, Copy, Trash2, ExternalLink, Calendar, Search, 
-  Filter, Edit, Check 
+  Filter, Edit, Check
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -26,10 +26,12 @@ export default function HistoryPage() {
   const { data: session, status } = useSession()
   const [generations, setGenerations] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(true)
+  const [credits, setCredits] = useState(0) // State for credits
+  const [creditsLoading, setCreditsLoading] = useState(true)
   const [error, setError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null) // State to track editing
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -38,11 +40,29 @@ export default function HistoryPage() {
 
     if (status === "authenticated") {
       fetchHistory()
+      fetchUserData() // Fetch credits
     }
   }, [status])
 
+  // --- NEW: Fetch user data for credits ---
+  const fetchUserData = async () => {
+    try {
+      setCreditsLoading(true)
+      const response = await fetch("/api/account")
+      if (!response.ok) throw new Error("Failed to fetch user data")
+      
+      const data = await response.json()
+      setCredits(data.user.credits)
+    } catch (err) {
+      setError("Could not load credit balance.")
+    } finally {
+      setCreditsLoading(false)
+    }
+  }
+
   const fetchHistory = async () => {
     try {
+      setLoading(true)
       const response = await fetch("/api/generations")
       const data = await response.json()
 
@@ -67,7 +87,8 @@ export default function HistoryPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
+    // Using native confirm for simplicity, replace with modal for better UX
+    if (!confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
       return
     }
 
@@ -123,13 +144,10 @@ export default function HistoryPage() {
     item.sourceUrl.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || loading || creditsLoading) {
     return (
       <div className="flex min-h-screen bg-linear-to-br from-gray-50 via-white to-slate-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950">
-        {/* Sidebar */}
-        <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800">
-          {/* Same sidebar as dashboard */}
-        </aside>
+        <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800"></aside>
         <div className="flex-1 ml-64 flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
@@ -144,7 +162,6 @@ export default function HistoryPage() {
     <div className="flex min-h-screen bg-linear-to-br from-gray-50 via-white to-slate-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950">
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
-        {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-800">
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-600 to-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
@@ -159,7 +176,7 @@ export default function HistoryPage() {
           </Link>
         </div>
 
-        {/* Navigation */}
+        {/* --- UPDATED: Navigation --- */}
         <nav className="flex-1 px-4 py-6 space-y-2">
           <Link 
             href="/dashboard" 
@@ -188,8 +205,9 @@ export default function HistoryPage() {
             <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
         </nav>
+        {/* --- END UPDATED --- */}
 
-        {/* Credits Card (Assuming credits are fetched separately or static for this view) */}
+        {/* --- UPDATED: Credits Card --- */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <div className="p-4 rounded-xl bg-linear-to-br from-emerald-600 to-teal-600 text-white mb-4">
             <div className="flex items-center justify-between mb-2">
@@ -197,9 +215,8 @@ export default function HistoryPage() {
               <Sparkles className="h-4 w-4" />
             </div>
             <div className="flex items-baseline gap-2">
-              {/* Note: This credit count is static. For dynamic, it would need another fetch */}
-              <span className="text-3xl font-bold">...</span>
-              <span className="text-sm opacity-80"></span>
+              <span className="text-3xl font-bold">{creditsLoading ? '...' : credits}</span>
+              <span className="text-sm opacity-80">available</span>
             </div>
             <Button 
               variant="secondary" 
@@ -210,6 +227,8 @@ export default function HistoryPage() {
               Buy Credits
             </Button>
           </div>
+          {/* --- END UPDATED --- */}
+
 
           {/* User Profile */}
           <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 mb-2">
@@ -277,7 +296,7 @@ export default function HistoryPage() {
             </div>
           )}
 
-          {filteredGenerations.length === 0 && !loading ? (
+          {filteredGenerations.length === 0 ? (
             <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
               <CardContent className="py-16">
                 <div className="text-center max-w-md mx-auto">
@@ -288,8 +307,8 @@ export default function HistoryPage() {
                     {searchQuery ? "No results found" : "No history yet"}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                    {searchQuery 
-                      ? "Try a different search query." 
+                    {searchQuery
+                      ? "Try a different search query."
                       : "Start generating content to see your history here."}
                   </p>
                   <Link href="/dashboard">
@@ -322,7 +341,7 @@ export default function HistoryPage() {
                       <Button 
                         variant="ghost" 
                         size="sm" 
-                        onClick={() => handleDelete(item.id)} // Added onClick
+                        onClick={() => handleDelete(item.id)}
                         className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
                       >
                         <Trash2 className="h-4 w-4" />
@@ -331,6 +350,7 @@ export default function HistoryPage() {
                   </CardHeader>
 
                   <CardContent className="pt-6 space-y-6">
+                    {/* Tweets */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/30 flex items-center justify-center">
@@ -372,6 +392,8 @@ export default function HistoryPage() {
                         })}
                       </div>
                     </div>
+
+                    {/* LinkedIn */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center">
@@ -412,6 +434,8 @@ export default function HistoryPage() {
                         })()}
                       </div>
                     </div>
+
+                    {/* Email */}
                     <div>
                       <div className="flex items-center gap-2 mb-3">
                         <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950/30 flex items-center justify-center">
