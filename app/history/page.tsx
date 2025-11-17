@@ -48,7 +48,7 @@ export default function HistoryPage() {
   const fetchUserData = async () => {
     try {
       setCreditsLoading(true)
-      const response = await fetch("/api/account")
+      const response = await fetch("/api/settings")
       if (!response.ok) throw new Error("Failed to fetch user data")
       
       const data = await response.json()
