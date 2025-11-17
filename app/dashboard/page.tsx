@@ -17,7 +17,7 @@ interface GenerationResult {
 }
 
 export default function DashboardPage() {
-  const { data: session, status } = useSession()
+  const { data: session, status, update: updateSession } = useSession()
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<GenerationResult | null>(null)
   const [credits, setCredits] = useState(0)
@@ -33,7 +33,7 @@ export default function DashboardPage() {
   const fetchUserData = async () => {
     try {
       setCreditsLoading(true)
-      const response = await fetch("/api/account") // Use the new endpoint
+      const response = await fetch("/api/settings")
       if (!response.ok) throw new Error("Failed to fetch user data")
       
       const data = await response.json()
@@ -82,6 +82,7 @@ export default function DashboardPage() {
 
       setResults(data.result)
       setCredits(data.credits)
+      await updateSession({ credits: data.credits });
     } catch (err) {
       setError("An error occurred. Please try again.")
     } finally {
@@ -319,5 +320,5 @@ export default function DashboardPage() {
         </main>
       </div>
     </div>
-  )
+  );
 }
