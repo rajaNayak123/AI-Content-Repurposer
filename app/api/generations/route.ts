@@ -23,7 +23,7 @@ export async function GET() {
       orderBy: { createdAt: "desc" },
     })
 
-    return NextResponse.json({ generations }, { status: 200 })
+    return NextResponse.json({ generations, credits: user.credits }, { status: 200 })
   } catch (error) {
     console.error("Get generations error:", error)
     return NextResponse.json({ message: "Internal server error" }, { status: 500 })
