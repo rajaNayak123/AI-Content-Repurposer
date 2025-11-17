@@ -4,12 +4,12 @@ import { useSession, signOut } from "next-auth/react"
 import { redirect } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
   Sparkles, History, CreditCard, LogOut, Settings, Home, ChevronRight, 
   Twitter, Linkedin, Mail, Copy, Trash2, ExternalLink, Calendar, Search, 
-  Filter, Edit, Check
+  Filter, Edit, Check, Image as ImageIcon
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -20,13 +20,14 @@ interface HistoryItem {
   resultTweets: string[]
   resultLinkedin: string
   resultEmail: string
+  resultImagePrompts: string[] // <--- Added this
 }
 
 export default function HistoryPage() {
   const { data: session, status } = useSession()
   const [generations, setGenerations] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(true)
-  const [credits, setCredits] = useState(0) // State for credits
+  const [credits, setCredits] = useState(0) 
   const [creditsLoading, setCreditsLoading] = useState(true)
   const [error, setError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
@@ -40,11 +41,10 @@ export default function HistoryPage() {
 
     if (status === "authenticated") {
       fetchHistory()
-      fetchUserData() // Fetch credits
+      fetchUserData() 
     }
   }, [status])
 
-  // --- NEW: Fetch user data for credits ---
   const fetchUserData = async () => {
     try {
       setCreditsLoading(true)
@@ -87,7 +87,6 @@ export default function HistoryPage() {
   }
 
   const handleDelete = async (id: string) => {
-    // Using native confirm for simplicity, replace with modal for better UX
     if (!confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
       return
     }
@@ -111,7 +110,7 @@ export default function HistoryPage() {
 
   const handleTextChange = (
     itemId: string,
-    field: "resultTweets" | "resultLinkedin" | "resultEmail",
+    field: "resultTweets" | "resultLinkedin" | "resultEmail" | "resultImagePrompts",
     value: string,
     index?: number
   ) => {
@@ -125,6 +124,14 @@ export default function HistoryPage() {
           const newTweets = [...gen.resultTweets]
           newTweets[index] = value
           return { ...gen, resultTweets: newTweets }
+        }
+
+        if (field === "resultImagePrompts" && index !== undefined) {
+          // Ensure array exists before copying
+          const currentPrompts = gen.resultImagePrompts || []
+          const newPrompts = [...currentPrompts]
+          newPrompts[index] = value
+          return { ...gen, resultImagePrompts: newPrompts }
         }
 
         if (field === "resultLinkedin") {
@@ -176,7 +183,6 @@ export default function HistoryPage() {
           </Link>
         </div>
 
-        {/* --- UPDATED: Navigation --- */}
         <nav className="flex-1 px-4 py-6 space-y-2">
           <Link 
             href="/dashboard" 
@@ -205,9 +211,7 @@ export default function HistoryPage() {
             <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
           </Link>
         </nav>
-        {/* --- END UPDATED --- */}
 
-        {/* --- UPDATED: Credits Card --- */}
         <div className="p-4 border-t border-gray-200 dark:border-gray-800">
           <div className="p-4 rounded-xl bg-linear-to-br from-emerald-600 to-teal-600 text-white mb-4">
             <div className="flex items-center justify-between mb-2">
@@ -227,10 +231,7 @@ export default function HistoryPage() {
               Buy Credits
             </Button>
           </div>
-          {/* --- END UPDATED --- */}
 
-
-          {/* User Profile */}
           <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 mb-2">
             <div className="w-10 h-10 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white font-bold">
               {session?.user?.name?.charAt(0).toUpperCase()}
@@ -476,6 +477,51 @@ export default function HistoryPage() {
                         })()}
                       </div>
                     </div>
+
+                    {/* --- AI Image Prompts Section --- */}
+                    {item.resultImagePrompts && item.resultImagePrompts.length > 0 && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center">
+                            <ImageIcon className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+                          </div>
+                          <h4 className="font-semibold text-gray-900 dark:text-white">Image Prompts</h4>
+                        </div>
+                        <div className="space-y-2">
+                          {item.resultImagePrompts.map((prompt: string, idx: number) => {
+                            const editKey = `prompt-${item.id}-${idx}`
+                            const isEditing = editingId === editKey
+
+                            return (
+                              <div key={idx} className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                                {isEditing ? (
+                                  <textarea
+                                    value={prompt}
+                                    onChange={(e) => handleTextChange(item.id, 'resultImagePrompts', e.target.value, idx)}
+                                    className="text-sm text-gray-700 dark:text-gray-300 w-full min-h-[100px] rounded-md border p-2 bg-white dark:bg-gray-700 font-mono"
+                                  />
+                                ) : (
+                                  <p className="text-sm text-gray-700 dark:text-gray-300 pr-24 font-mono">{prompt}</p>
+                                )}
+                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(isEditing ? null : editKey)}>
+                                    {isEditing ? <Check className="h-4 w-4 text-emerald-600" /> : <Edit className="h-4 w-4" />}
+                                  </Button>
+                                  <Button variant="ghost" size="icon-sm" onClick={() => handleCopy(prompt, editKey)}>
+                                    <Copy className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                                {copiedId === editKey && (
+                                  <span className="absolute top-3 right-24 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
+                                    Copied!
+                                  </span>
+                                )}
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               ))}
