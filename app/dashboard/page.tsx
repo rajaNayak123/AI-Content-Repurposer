@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react"
 import { redirect } from "next/navigation"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,8 +20,30 @@ export default function DashboardPage() {
   const { data: session, status } = useSession()
   const [loading, setLoading] = useState(false)
   const [results, setResults] = useState<GenerationResult | null>(null)
-  const [credits, setCredits] = useState(5)
+  const [credits, setCredits] = useState(0)
+  const [creditsLoading, setCreditsLoading] = useState(true)
   const [error, setError] = useState("")
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchUserData()
+    }
+  }, [status])
+
+  const fetchUserData = async () => {
+    try {
+      setCreditsLoading(true)
+      const response = await fetch("/api/account") // Use the new endpoint
+      if (!response.ok) throw new Error("Failed to fetch user data")
+      
+      const data = await response.json()
+      setCredits(data.user.credits)
+    } catch (err) {
+      setError("Could not load credit balance.")
+    } finally {
+      setCreditsLoading(false)
+    }
+  }
 
   if (status === "unauthenticated") {
     redirect("/auth/login")
@@ -124,8 +146,8 @@ export default function DashboardPage() {
               <Sparkles className="h-4 w-4" />
             </div>
             <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">{credits}</span>
-              <span className="text-sm opacity-80">/ 5 free</span>
+              <span className="text-3xl font-bold">{creditsLoading ? '...' : credits}</span>
+              <span className="text-sm opacity-80">available</span>
             </div>
             <Button 
               variant="secondary" 
