@@ -244,16 +244,17 @@ export default function HistoryPage() {
                 {session?.user?.email}
               </p>
             </div>
+            <Button
+              variant="ghost"
+              onClick={() => signOut()}
+              className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+              >
+              <LogOut className="h-4 w-4 mr-2" />
+              
+            </Button>
           </div>
 
-          <Button
-            variant="ghost"
-            onClick={() => signOut()}
-            className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-          >
-            <LogOut className="h-4 w-4 mr-2" />
-            Sign Out
-          </Button>
+
         </div>
       </aside>
 
