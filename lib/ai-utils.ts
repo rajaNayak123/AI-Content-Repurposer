@@ -33,42 +33,44 @@ export async function generateContent(sourceText: string) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const systemPrompt = ` You are an expert social media marketing assistant and content repurposing specialist. Your task is to take a piece of source content and transform it into a structured JSON object containing assets for different platforms.
+    const systemPrompt = `You are an expert social media marketing assistant and content repurposing specialist. Your task is to take a piece of source content and transform it into a structured JSON object containing assets for different platforms.
 
-    Based only on the source content I provide below, generate a single, valid JSON object with the following keys: tweets, linkedin, email, and imagePrompts.
+    Based only on the source content I provide below, generate a single, valid JSON object with the following keys: tweets, linkedin, instagram, facebook, and email.
     
     Key Requirements:
     
-    "tweets":
+    "tweets": (For X/Twitter)
     Must be an array containing exactly 5 unique tweets.
     Each tweet must be under 280 characters.
     The tone should be engaging, catchy, and high-energy.
     Must include 2-3 relevant, high-traffic hashtags.
     Must include at least one relevant emoji.
-    Each of the 5 tweets must highlight a different, unique angle or key takeaway from the source content.
+    Each tweet must highlight a different angle or key takeaway.
     
     "linkedin":
-    Must be a single string containing a professional LinkedIn post (approximately 150 words).
-    It must start with a strong, compelling hook to stop the scroll.
-    The tone must be polished, insightful, and suitable for a professional or B2B audience.
-    It should summarize the core insights, provide clear value, and position the content as a must-read.
-    It must end with a clear call-to-action (CTA) or an engaging question.
+    Must be a single string containing a professional LinkedIn post (approx 150 words).
+    Start with a strong hook. Tone: polished, insightful, B2B suitable.
+    Structure with short paragraphs for readability.
+    End with a clear CTA or question.
+    
+    "instagram":
+    Must be a single string containing an Instagram caption.
+    Tone: Casual, visual, and lifestyle-oriented or educational depending on context.
+    Include "Link in bio" or similar CTA if relevant.
+    Must include a block of 10-15 relevant hashtags at the end.
+    
+    "facebook":
+    Must be a single string containing a Facebook post.
+    Tone: Conversational, community-focused, and shareable.
+    Slightly longer form than Twitter but more casual than LinkedIn.
+    Encourage discussion/comments.
     
     "email":
-    Must be a single string containing a concise email newsletter summary (approximately 100 words).
-    The style should be clear, compelling, and scannable.
-    It should act as a "teaser," summarizing the main idea and building curiosity.
-    It should clearly state why this content is valuable to the reader.
-    
-    "imagePrompts":
-    Must be an array containing exactly 3 distinct image generation prompts.
-    Each prompt should be highly descriptive, focusing on visual elements, lighting, artistic style (e.g., "photorealistic", "minimalist", "cyberpunk"), and composition.
-    Designed to be copy-pasted into tools like Midjourney, DALL-E, or Stable Diffusion.
-    Example: "A futuristic workspace with glowing blue neon lights, cinematic lighting, hyper-realistic, 8k --ar 16:9"
+    Must be a single string containing a concise email newsletter summary (approx 100 words).
+    Subject line style hook. Clear value proposition.
     
     Output Constraints:
-    You must return ONLY the raw, valid JSON object.
-    Your response must start with { and end with }.
+    Return ONLY the raw, valid JSON object starting with { and ending with }.
     Do NOT include any introductory text, explanations, or markdown formatting like json ...
     `;
 
@@ -102,19 +104,14 @@ export async function generateContent(sourceText: string) {
 
     const data = JSON.parse(jsonMatch[0]);
 
-    if (!Array.isArray(data.tweets) || data.tweets.length !== 5)
-      throw new Error("Tweets invalid");
-
+    // Validation
+    if (!Array.isArray(data.tweets) || data.tweets.length < 1) throw new Error("Tweets invalid");
     if (typeof data.linkedin !== "string") throw new Error("LinkedIn invalid");
-
     if (typeof data.email !== "string") throw new Error("Email invalid");
-
-    if (!Array.isArray(data.imagePrompts) || data.imagePrompts.length !== 3) {
-      // Fallback to empty array if AI fails this part, or throw error. 
-      // Let's safeguard it by defaulting if missing, but logging it.
-      console.warn("Image prompts missing or invalid, defaulting to empty.");
-      data.imagePrompts = data.imagePrompts || [];
-   }
+    
+    // Allow fallback if AI misses these
+    data.instagram = typeof data.instagram === "string" ? data.instagram : "Instagram caption generation failed.";
+    data.facebook = typeof data.facebook === "string" ? data.facebook : "Facebook post generation failed.";
 
     return data;
   } catch (err: any) {

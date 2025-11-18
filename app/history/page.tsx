@@ -8,8 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { 
   Sparkles, History, CreditCard, LogOut, Settings, Home, ChevronRight, 
-  Twitter, Linkedin, Mail, Copy, Trash2, ExternalLink, Calendar, Search, 
-  Filter, Edit, Check, Image as ImageIcon
+  Twitter, Linkedin, Instagram, Facebook, Mail, Copy, Trash2, Search, 
 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 
@@ -19,8 +18,9 @@ interface HistoryItem {
   createdAt: string
   resultTweets: string[]
   resultLinkedin: string
+  resultInstagram?: string
+  resultFacebook?: string
   resultEmail: string
-  resultImagePrompts: string[] // <--- Added this
 }
 
 export default function HistoryPage() {
@@ -32,7 +32,6 @@ export default function HistoryPage() {
   const [error, setError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [copiedId, setCopiedId] = useState<string | null>(null)
-  const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -50,7 +49,6 @@ export default function HistoryPage() {
       setCreditsLoading(true)
       const response = await fetch("/api/settings")
       if (!response.ok) throw new Error("Failed to fetch user data")
-      
       const data = await response.json()
       setCredits(data.user.credits)
     } catch (err) {
@@ -87,7 +85,7 @@ export default function HistoryPage() {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this item? This action cannot be undone.")) {
+    if (!confirm("Are you sure you want to delete this item?")) {
       return
     }
 
@@ -97,54 +95,12 @@ export default function HistoryPage() {
         method: "DELETE",
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.message || "Failed to delete item")
-      }
+      if (!response.ok) throw new Error("Failed to delete item")
 
       setGenerations((prev) => prev.filter((item) => item.id !== id))
     } catch (err: any) {
       setError(err.message || "An error occurred while deleting.")
     }
-  }
-
-  const handleTextChange = (
-    itemId: string,
-    field: "resultTweets" | "resultLinkedin" | "resultEmail" | "resultImagePrompts",
-    value: string,
-    index?: number
-  ) => {
-    setGenerations((prev) =>
-      prev.map((gen) => {
-        if (gen.id !== itemId) {
-          return gen
-        }
-
-        if (field === "resultTweets" && index !== undefined) {
-          const newTweets = [...gen.resultTweets]
-          newTweets[index] = value
-          return { ...gen, resultTweets: newTweets }
-        }
-
-        if (field === "resultImagePrompts" && index !== undefined) {
-          // Ensure array exists before copying
-          const currentPrompts = gen.resultImagePrompts || []
-          const newPrompts = [...currentPrompts]
-          newPrompts[index] = value
-          return { ...gen, resultImagePrompts: newPrompts }
-        }
-
-        if (field === "resultLinkedin") {
-          return { ...gen, resultLinkedin: value }
-        }
-
-        if (field === "resultEmail") {
-          return { ...gen, resultEmail: value }
-        }
-
-        return gen
-      })
-    )
   }
 
   const filteredGenerations = generations.filter(item =>
@@ -154,13 +110,8 @@ export default function HistoryPage() {
   if (status === "loading" || loading || creditsLoading) {
     return (
       <div className="flex min-h-screen bg-linear-to-br from-gray-50 via-white to-slate-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950">
-        <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800"></aside>
-        <div className="flex-1 ml-64 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-            <span className="text-lg font-medium text-gray-600 dark:text-gray-400">Loading history...</span>
-          </div>
-        </div>
+         {/* Loading Spinner */}
+         <div className="flex-1 flex items-center justify-center">Loading...</div>
       </div>
     )
   }
@@ -171,363 +122,92 @@ export default function HistoryPage() {
       <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
         <div className="p-6 border-b border-gray-200 dark:border-gray-800">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-10 h-10 rounded-xl bg-linear-to-br from-emerald-600 to-teal-600 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg">
-              <Sparkles className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <span className="text-base font-bold bg-linear-to-r from-emerald-600 to-teal-600 bg-clip-text text-transparent block">
-                ContentRepurpose
-              </span>
-              <span className="text-xs text-gray-500 dark:text-gray-400">AI-Powered</span>
-            </div>
+             <Sparkles className="h-6 w-6 text-emerald-600" />
+             <span className="font-bold text-lg">ContentRepurpose</span>
           </Link>
         </div>
-
-        <nav className="flex-1 px-4 py-6 space-y-2">
-          <Link 
-            href="/dashboard" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors group"
-          >
-            <Home className="h-5 w-5" />
-            <span>Dashboard</span>
-            <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-          </Link>
-
-          <Link 
-            href="/history" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 font-medium group"
-          >
-            <History className="h-5 w-5" />
-            <span>History</span>
-            <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-          </Link>
-
-          <Link 
-            href="/settings" 
-            className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors group"
-          >
-            <Settings className="h-5 w-5" />
-            <span>Settings</span>
-            <ChevronRight className="h-4 w-4 ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
-          </Link>
+         <nav className="flex-1 px-4 py-6 space-y-2">
+          <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><Home className="h-5 w-5"/>Dashboard</Link>
+          <Link href="/history" className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 text-emerald-700"><History className="h-5 w-5"/>History</Link>
+          <Link href="/settings" className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"><Settings className="h-5 w-5"/>Settings</Link>
         </nav>
-
-        <div className="p-4 border-t border-gray-200 dark:border-gray-800">
-          <div className="p-4 rounded-xl bg-linear-to-br from-emerald-600 to-teal-600 text-white mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium opacity-90">Credits</span>
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-bold">{creditsLoading ? '...' : credits}</span>
-              <span className="text-sm opacity-80">available</span>
-            </div>
-            <Button 
-              variant="secondary" 
-              size="sm" 
-              className="w-full mt-3 bg-white/20 hover:bg-white/30 text-white border-0"
-            >
-              <CreditCard className="h-4 w-4 mr-2" />
-              Buy Credits
-            </Button>
-          </div>
-
-          <div className="flex items-center gap-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800 mb-2">
-            <div className="w-10 h-10 rounded-full bg-linear-to-br from-emerald-600 to-teal-600 flex items-center justify-center text-white font-bold">
-              {session?.user?.name?.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {session?.user?.name}
-              </p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                {session?.user?.email}
-              </p>
-            </div>
-            <Button
-              variant="ghost"
-              onClick={() => signOut()}
-              className="cursor-pointer text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-              >
-              <LogOut className="h-4 w-4 mr-2" />
-              
-            </Button>
-          </div>
-
-
-        </div>
+        <div className="p-4"><Button variant="ghost" onClick={() => signOut()}><LogOut className="mr-2 h-4 w-4"/>Logout</Button></div>
       </aside>
 
-      {/* Main Content */}
       <div className="flex-1 ml-64">
-        {/* Header */}
-        <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800">
-          <div className="px-8 py-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">Generation History</h1>
-                <p className="text-sm text-gray-600 dark:text-gray-400">View and manage all your generated content</p>
-              </div>
-              <div className="flex items-center gap-3">
-                <Button variant="outline" size="sm">
-                  <Filter className="h-4 w-4 mr-2" />
-                  Filter
-                </Button>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative">
+        <header className="sticky top-0 z-40 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 px-8 py-6">
+            <h1 className="text-2xl font-bold">Generation History</h1>
+            <div className="relative mt-4">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
               <Input
                 type="text"
                 placeholder="Search by URL..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                className="pl-10 bg-gray-50"
               />
             </div>
-          </div>
         </header>
 
-        {/* Content */}
-        <main className="p-8">
-          {error && (
-            <div className="mb-8 p-4 bg-red-50 dark:bg-red-950/20 border-2 border-red-200 dark:border-red-800 rounded-xl">
-              <p className="text-sm text-red-700 dark:text-red-400 font-medium">{error}</p>
-            </div>
-          )}
+        <main className="p-8 space-y-6">
+          {filteredGenerations.map((item) => (
+            <Card key={item.id} className="border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all">
+              <CardHeader className="bg-gray-50 dark:bg-gray-800/50 flex flex-row justify-between items-start">
+                 <div>
+                    <CardTitle className="text-base font-medium truncate">{item.sourceUrl}</CardTitle>
+                    <p className="text-xs text-gray-500 mt-1">{new Date(item.createdAt).toLocaleString()}</p>
+                 </div>
+                 <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="text-red-600"><Trash2 className="h-4 w-4"/></Button>
+              </CardHeader>
 
-          {filteredGenerations.length === 0 ? (
-            <Card className="border-2 border-dashed border-gray-300 dark:border-gray-700">
-              <CardContent className="py-16">
-                <div className="text-center max-w-md mx-auto">
-                  <div className="w-16 h-16 rounded-full bg-linear-to-br from-emerald-100 to-teal-100 dark:from-emerald-950/30 dark:to-teal-950/30 flex items-center justify-center mx-auto mb-4">
-                    <History className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-2">
-                    {searchQuery ? "No results found" : "No history yet"}
-                  </h3>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-                    {searchQuery
-                      ? "Try a different search query."
-                      : "Start generating content to see your history here."}
-                  </p>
-                  <Link href="/dashboard">
-                    <Button className="bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
-                      <Sparkles className="h-4 w-4 mr-2" />
-                      Generate Content
-                    </Button>
-                  </Link>
+              <CardContent className="pt-6 space-y-6">
+                
+                {/* X / Tweets */}
+                <div>
+                    <h4 className="font-semibold flex items-center gap-2 mb-2"><Twitter className="h-4 w-4 text-sky-500"/> Tweets</h4>
+                    <div className="space-y-2">
+                        {item.resultTweets.map((tweet, idx) => (
+                           <div key={idx} className="bg-gray-50 p-3 rounded text-sm relative group">
+                                <p>{tweet}</p>
+                                <Button variant="ghost" size="icon-sm" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100" onClick={() => handleCopy(tweet, `t-${item.id}-${idx}`)}><Copy className="h-3 w-3"/></Button>
+                           </div>
+                        ))}
+                    </div>
                 </div>
+
+                {/* LinkedIn */}
+                <div>
+                    <h4 className="font-semibold flex items-center gap-2 mb-2"><Linkedin className="h-4 w-4 text-blue-600"/> LinkedIn</h4>
+                    <div className="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap relative group">
+                        {item.resultLinkedin}
+                        <Button variant="ghost" size="icon-sm" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100" onClick={() => handleCopy(item.resultLinkedin, `l-${item.id}`)}><Copy className="h-3 w-3"/></Button>
+                    </div>
+                </div>
+
+                {/* Instagram */}
+                {item.resultInstagram && (
+                <div>
+                    <h4 className="font-semibold flex items-center gap-2 mb-2"><Instagram className="h-4 w-4 text-pink-600"/> Instagram</h4>
+                    <div className="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap relative group">
+                        {item.resultInstagram}
+                        <Button variant="ghost" size="icon-sm" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100" onClick={() => handleCopy(item.resultInstagram!, `i-${item.id}`)}><Copy className="h-3 w-3"/></Button>
+                    </div>
+                </div>
+                )}
+
+                {/* Facebook */}
+                {item.resultFacebook && (
+                <div>
+                    <h4 className="font-semibold flex items-center gap-2 mb-2"><Facebook className="h-4 w-4 text-blue-500"/> Facebook</h4>
+                    <div className="bg-gray-50 p-3 rounded text-sm whitespace-pre-wrap relative group">
+                        {item.resultFacebook}
+                        <Button variant="ghost" size="icon-sm" className="absolute top-2 right-2 opacity-0 group-hover:opacity-100" onClick={() => handleCopy(item.resultFacebook!, `f-${item.id}`)}><Copy className="h-3 w-3"/></Button>
+                    </div>
+                </div>
+                )}
               </CardContent>
             </Card>
-          ) : (
-            <div className="space-y-6">
-              {filteredGenerations.map((item) => (
-                <Card key={item.id} className="border border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all">
-                  <CardHeader className="border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-2">
-                          <ExternalLink className="h-4 w-4 text-gray-400 shrink-0" />
-                          <CardTitle className="text-base font-medium text-gray-900 dark:text-white truncate">
-                            {item.sourceUrl}
-                          </CardTitle>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                          <Calendar className="h-3.5 w-3.5" />
-                          {new Date(item.createdAt).toLocaleString()}
-                        </div>
-                      </div>
-                      <Button 
-                        variant="ghost" 
-                        size="sm" 
-                        onClick={() => handleDelete(item.id)}
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </CardHeader>
-
-                  <CardContent className="pt-6 space-y-6">
-                    {/* Tweets */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-sky-100 dark:bg-sky-950/30 flex items-center justify-center">
-                          <Twitter className="h-4 w-4 text-sky-600 dark:text-sky-400" />
-                        </div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">Tweets ({item.resultTweets.length})</h4>
-                      </div>
-                      <div className="space-y-2">
-                        {item.resultTweets.map((tweet: string, idx: number) => {
-                          const editKey = `tweet-${item.id}-${idx}`
-                          const isEditing = editingId === editKey
-
-                          return (
-                            <div key={idx} className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                              {isEditing ? (
-                                <textarea
-                                  value={tweet}
-                                  onChange={(e) => handleTextChange(item.id, 'resultTweets', e.target.value, idx)}
-                                  className="text-sm text-gray-700 dark:text-gray-300 w-full min-h-[100px] rounded-md border p-2 bg-white dark:bg-gray-700"
-                                />
-                              ) : (
-                                <p className="text-sm text-gray-700 dark:text-gray-300 pr-24">{tweet}</p>
-                              )}
-                              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(isEditing ? null : editKey)}>
-                                  {isEditing ? <Check className="h-4 w-4 text-emerald-600" /> : <Edit className="h-4 w-4" />}
-                                </Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => handleCopy(tweet, editKey)}>
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              {copiedId === editKey && (
-                                <span className="absolute top-3 right-24 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                  Copied!
-                                </span>
-                              )}
-                            </div>
-                          )
-                        })}
-                      </div>
-                    </div>
-
-                    {/* LinkedIn */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-100 dark:bg-blue-950/30 flex items-center justify-center">
-                          <Linkedin className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                        </div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">LinkedIn Post</h4>
-                      </div>
-                      <div className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        {(() => {
-                          const editKey = `linkedin-${item.id}`
-                          const isEditing = editingId === editKey
-                          return (
-                            <>
-                              {isEditing ? (
-                                <textarea
-                                  value={item.resultLinkedin}
-                                  onChange={(e) => handleTextChange(item.id, 'resultLinkedin', e.target.value)}
-                                  className="text-sm text-gray-700 dark:text-gray-300 w-full min-h-[150px] rounded-md border p-2 bg-white dark:bg-gray-700 whitespace-pre-wrap"
-                                />
-                              ) : (
-                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-24">{item.resultLinkedin}</p>
-                              )}
-                              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(isEditing ? null : editKey)}>
-                                  {isEditing ? <Check className="h-4 w-4 text-emerald-600" /> : <Edit className="h-4 w-4" />}
-                                </Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => handleCopy(item.resultLinkedin, editKey)}>
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              {copiedId === editKey && (
-                                <span className="absolute top-3 right-24 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                  Copied!
-                                </span>
-                              )}
-                            </>
-                          )
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* Email */}
-                    <div>
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="w-8 h-8 rounded-lg bg-purple-100 dark:bg-purple-950/30 flex items-center justify-center">
-                          <Mail className="h-4 w-4 text-purple-600 dark:text-purple-400" />
-                        </div>
-                        <h4 className="font-semibold text-gray-900 dark:text-white">Email Summary</h4>
-                      </div>
-                      <div className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                        {(() => {
-                          const editKey = `email-${item.id}`
-                          const isEditing = editingId === editKey
-                          return (
-                            <>
-                              {isEditing ? (
-                                <textarea
-                                  value={item.resultEmail}
-                                  onChange={(e) => handleTextChange(item.id, 'resultEmail', e.target.value)}
-                                  className="text-sm text-gray-700 dark:text-gray-300 w-full min-h-[150px] rounded-md border p-2 bg-white dark:bg-gray-700 whitespace-pre-wrap"
-                                />
-                              ) : (
-                                <p className="text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap pr-24">{item.resultEmail}</p>
-                              )}
-                              <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(isEditing ? null : editKey)}>
-                                  {isEditing ? <Check className="h-4 w-4 text-emerald-600" /> : <Edit className="h-4 w-4" />}
-                                </Button>
-                                <Button variant="ghost" size="icon-sm" onClick={() => handleCopy(item.resultEmail, editKey)}>
-                                  <Copy className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              {copiedId === editKey && (
-                                <span className="absolute top-3 right-24 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                  Copied!
-                                </span>
-                              )}
-                            </>
-                          )
-                        })()}
-                      </div>
-                    </div>
-
-                    {/* --- AI Image Prompts Section --- */}
-                    {item.resultImagePrompts && item.resultImagePrompts.length > 0 && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-3">
-                          <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-950/30 flex items-center justify-center">
-                            <ImageIcon className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-                          </div>
-                          <h4 className="font-semibold text-gray-900 dark:text-white">Image Prompts</h4>
-                        </div>
-                        <div className="space-y-2">
-                          {item.resultImagePrompts.map((prompt: string, idx: number) => {
-                            const editKey = `prompt-${item.id}-${idx}`
-                            const isEditing = editingId === editKey
-
-                            return (
-                              <div key={idx} className="group relative p-4 rounded-lg bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                                {isEditing ? (
-                                  <textarea
-                                    value={prompt}
-                                    onChange={(e) => handleTextChange(item.id, 'resultImagePrompts', e.target.value, idx)}
-                                    className="text-sm text-gray-700 dark:text-gray-300 w-full min-h-[100px] rounded-md border p-2 bg-white dark:bg-gray-700 font-mono"
-                                  />
-                                ) : (
-                                  <p className="text-sm text-gray-700 dark:text-gray-300 pr-24 font-mono">{prompt}</p>
-                                )}
-                                <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <Button variant="ghost" size="icon-sm" onClick={() => setEditingId(isEditing ? null : editKey)}>
-                                    {isEditing ? <Check className="h-4 w-4 text-emerald-600" /> : <Edit className="h-4 w-4" />}
-                                  </Button>
-                                  <Button variant="ghost" size="icon-sm" onClick={() => handleCopy(prompt, editKey)}>
-                                    <Copy className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                                {copiedId === editKey && (
-                                  <span className="absolute top-3 right-24 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-                                    Copied!
-                                  </span>
-                                )}
-                              </div>
-                            )
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+          ))}
         </main>
       </div>
     </div>

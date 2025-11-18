@@ -20,7 +20,6 @@ model Account {
   scope              String?
   id_token           String?
   session_state      String?
-
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([provider, providerAccountId])
@@ -59,10 +58,12 @@ model Generation {
   createdAt      DateTime @default(now())
   sourceUrl      String
   
-  resultTweets   Json     // Array of 5 tweets
-  resultLinkedin String   // LinkedIn post
-  resultEmail    String   // Email summary
-  resultImagePrompts Json? // Array of 3 image prompts
+  resultTweets   Json     
+  resultLinkedin String   
+  resultInstagram String? 
+  resultFacebook  String? 
+  resultEmail    String   
+  
   userId         String
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 

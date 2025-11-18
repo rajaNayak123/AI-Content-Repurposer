@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react" 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Twitter, Linkedin, Instagram, Facebook, Mail } from "lucide-react"
 
 interface ResultsDisplayProps {
   results: {
     tweets: string[]
     linkedin: string
+    instagram: string
+    facebook: string
     email: string
-    imagePrompts: string[]
   }
 }
 
@@ -28,34 +30,29 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
     setCopied(type)
     setTimeout(() => setCopied(null), 2000)
   }
-  const handleTweetChange = (e: React.ChangeEvent<HTMLTextAreaElement>, index: number) => {
-    const newTweets = [...editedResults.tweets]
-    newTweets[index] = e.target.value
-    setEditedResults(prev => ({ ...prev, tweets: newTweets }))
-  }
 
-  const handleLinkedinChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditedResults(prev => ({ ...prev, linkedin: e.target.value }))
-  }
-
-  const handleEmailChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setEditedResults(prev => ({ ...prev, email: e.target.value }))
-  }
-
-  const handleImagePromptChange = (e: React.ChangeEvent<HTMLTextAreaElement>, index: number) => {
-    const currentPrompts = editedResults.imagePrompts || [];
-    const newPrompts = [...currentPrompts]
-    newPrompts[index] = e.target.value
-    setEditedResults(prev => ({ ...prev, imagePrompts: newPrompts }))
-  }
+  const handleTextChange = (field: keyof typeof editedResults, value: string | string[], index?: number) => {
+    setEditedResults(prev => {
+      if (Array.isArray(prev[field]) && typeof index === 'number') {
+        const newArray = [...(prev[field] as string[])];
+        newArray[index] = value as string;
+        return { ...prev, [field]: newArray };
+      }
+      return { ...prev, [field]: value };
+    });
+  };
 
   return (
     <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Generated Content</h2>
+      
+      {/* Tweets / X */}
       <Card>
         <CardHeader>
-          <CardTitle>Tweets</CardTitle>
-          <CardDescription>5 short, catchy tweets with hashtags</CardDescription>
+          <div className="flex items-center gap-2">
+            <Twitter className="h-5 w-5 text-sky-500" />
+            <CardTitle>X (Twitter) Thread</CardTitle>
+          </div>
+          <CardDescription>Engaging tweets with hashtags</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {editedResults.tweets.map((tweet, idx) => {
@@ -66,14 +63,14 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
                 {isEditing ? (
                   <textarea
                     value={tweet}
-                    onChange={(e) => handleTweetChange(e, idx)}
-                    className="flex-1 text-sm w-full min-h-[100px] rounded-md border p-2 bg-background dark:bg-gray-800"
+                    onChange={(e) => handleTextChange('tweets', e.target.value, idx)}
+                    className="flex-1 text-sm w-full min-h-[100px] rounded-md border p-2 bg-background"
                   />
                 ) : (
-                  <p className="flex-1 text-sm">{tweet}</p>
+                  <p className="flex-1 text-sm whitespace-pre-wrap">{tweet}</p>
                 )}
                 <div className="flex flex-col gap-2 shrink-0">
-                  <Button variant="outline" size="sm" onClick={() => setEditingKey(isEditing ? null : editKey)}>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingKey(isEditing ? null : editKey)}>
                     {isEditing ? "Save" : "Edit"}
                   </Button>
                   <Button variant="outline" size="sm" onClick={() => copyToClipboard(tweet, editKey)}>
@@ -85,9 +82,14 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
           })}
         </CardContent>
       </Card>
+
+      {/* LinkedIn */}
       <Card>
         <CardHeader>
-          <CardTitle>LinkedIn Post</CardTitle>
+          <div className="flex items-center gap-2">
+            <Linkedin className="h-5 w-5 text-blue-600" />
+            <CardTitle>LinkedIn Post</CardTitle>
+          </div>
           <CardDescription>Professional post for your network</CardDescription>
         </CardHeader>
         <CardContent>
@@ -95,14 +97,14 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
             {editingKey === 'linkedin' ? (
               <textarea
                 value={editedResults.linkedin}
-                onChange={handleLinkedinChange}
-                className="text-sm whitespace-pre-wrap w-full min-h-[150px] rounded-md border p-2 bg-background dark:bg-gray-800"
+                onChange={(e) => handleTextChange('linkedin', e.target.value)}
+                className="text-sm whitespace-pre-wrap w-full min-h-[150px] rounded-md border p-2 bg-background"
               />
             ) : (
               <p className="text-sm whitespace-pre-wrap">{editedResults.linkedin}</p>
             )}
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditingKey(editingKey === 'linkedin' ? null : "linkedin")}>
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={() => setEditingKey(editingKey === 'linkedin' ? null : "linkedin")}>
                 {editingKey === 'linkedin' ? "Save" : "Edit"}
               </Button>
               <Button variant="outline" size="sm" onClick={() => copyToClipboard(editedResults.linkedin, "linkedin")}>
@@ -112,24 +114,93 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
           </div>
         </CardContent>
       </Card>
+
+      {/* Instagram */}
       <Card>
         <CardHeader>
-          <CardTitle>Email Summary</CardTitle>
-          <CardDescription>100-word summary for your newsletter</CardDescription>
+          <div className="flex items-center gap-2">
+            <Instagram className="h-5 w-5 text-pink-600" />
+            <CardTitle>Instagram Caption</CardTitle>
+          </div>
+          <CardDescription>Visual-first caption with hashtags</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-muted p-4 rounded-lg space-y-4">
+            {editingKey === 'instagram' ? (
+              <textarea
+                value={editedResults.instagram}
+                onChange={(e) => handleTextChange('instagram', e.target.value)}
+                className="text-sm whitespace-pre-wrap w-full min-h-[150px] rounded-md border p-2 bg-background"
+              />
+            ) : (
+              <p className="text-sm whitespace-pre-wrap">{editedResults.instagram}</p>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={() => setEditingKey(editingKey === 'instagram' ? null : "instagram")}>
+                {editingKey === 'instagram' ? "Save" : "Edit"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => copyToClipboard(editedResults.instagram, "instagram")}>
+                {copied === "instagram" ? "Copied!" : "Copy"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Facebook */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Facebook className="h-5 w-5 text-blue-500" />
+            <CardTitle>Facebook Post</CardTitle>
+          </div>
+          <CardDescription>Conversational community post</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-muted p-4 rounded-lg space-y-4">
+            {editingKey === 'facebook' ? (
+              <textarea
+                value={editedResults.facebook}
+                onChange={(e) => handleTextChange('facebook', e.target.value)}
+                className="text-sm whitespace-pre-wrap w-full min-h-[150px] rounded-md border p-2 bg-background"
+              />
+            ) : (
+              <p className="text-sm whitespace-pre-wrap">{editedResults.facebook}</p>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={() => setEditingKey(editingKey === 'facebook' ? null : "facebook")}>
+                {editingKey === 'facebook' ? "Save" : "Edit"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => copyToClipboard(editedResults.facebook, "facebook")}>
+                {copied === "facebook" ? "Copied!" : "Copy"}
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Email */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Mail className="h-5 w-5 text-purple-600" />
+            <CardTitle>Email Summary</CardTitle>
+          </div>
+          <CardDescription>Newsletter teaser</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="bg-muted p-4 rounded-lg space-y-4">
             {editingKey === 'email' ? (
               <textarea
                 value={editedResults.email}
-                onChange={handleEmailChange}
-                className="text-sm whitespace-pre-wrap w-full min-h-[150px] rounded-md border p-2 bg-background dark:bg-gray-800"
+                onChange={(e) => handleTextChange('email', e.target.value)}
+                className="text-sm whitespace-pre-wrap w-full min-h-[150px] rounded-md border p-2 bg-background"
               />
             ) : (
               <p className="text-sm whitespace-pre-wrap">{editedResults.email}</p>
             )}
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" onClick={() => setEditingKey(editingKey === 'email' ? null : "email")}>
+            <div className="flex gap-2 justify-end">
+              <Button variant="ghost" size="sm" onClick={() => setEditingKey(editingKey === 'email' ? null : "email")}>
                 {editingKey === 'email' ? "Save" : "Edit"}
               </Button>
               <Button variant="outline" size="sm" onClick={() => copyToClipboard(editedResults.email, "email")}>
@@ -137,39 +208,6 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
               </Button>
             </div>
           </div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader>
-          <CardTitle>AI Image Prompts</CardTitle>
-          <CardDescription>Detailed prompts for Midjourney, DALL-E, or Stable Diffusion</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {editedResults.imagePrompts?.map((prompt, idx) => {
-            const editKey = `prompt-${idx}`
-            const isEditing = editingKey === editKey
-            return (
-              <div key={idx} className="bg-muted p-4 rounded-lg flex justify-between items-start gap-4">
-                {isEditing ? (
-                  <textarea
-                    value={prompt}
-                    onChange={(e) => handleImagePromptChange(e, idx)}
-                    className="flex-1 text-sm w-full min-h-20px rounded-md border p-2 bg-background dark:bg-gray-800"
-                  />
-                ) : (
-                  <p className="flex-1 text-sm font-mono text-gray-700 dark:text-gray-300">{prompt}</p>
-                )}
-                <div className="flex flex-col gap-2 shrink-0">
-                  <Button variant="outline" size="sm" onClick={() => setEditingKey(isEditing ? null : editKey)}>
-                    {isEditing ? "Save" : "Edit"}
-                  </Button>
-                  <Button variant="outline" size="sm" onClick={() => copyToClipboard(prompt, editKey)}>
-                    {copied === editKey ? "Copied!" : "Copy"}
-                  </Button>
-                </div>
-              </div>
-            )
-          })}
         </CardContent>
       </Card>
     </div>
