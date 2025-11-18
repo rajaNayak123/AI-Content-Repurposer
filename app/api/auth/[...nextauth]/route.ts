@@ -15,32 +15,33 @@ export const authOptions: NextAuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error("Invalid credentials")
-        }
+        try {
+          if (!credentials?.email || !credentials?.password) {
+            return null
+          }
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email },
-        })
+          const user = await prisma.user.findUnique({
+            where: { email: credentials.email },
+          })
 
-        if (!user) {
-          throw new Error("User not found")
-        }
+          if (!user || !user.password) {
+            return null
+          }
 
-        if (!user.password) {
-          throw new Error("Invalid credentials")
-        }
+          const passwordValid = await bcrypt.compare(credentials.password, user.password)
 
-        const passwordValid = await bcrypt.compare(credentials.password, user.password)
+          if (!passwordValid) {
+            return null
+          }
 
-        if (!passwordValid) {
-          throw new Error("Invalid credentials")
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+          }
+        } catch (error) {
+          console.error("Auth error:", error)
+          return null
         }
       },
     }),
@@ -65,8 +66,10 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
   },
+  secret: process.env.NEXTAUTH_SECRET,
+  debug: process.env.NODE_ENV === "development",
 }
 
 const handler = NextAuth(authOptions)
 
-export { handler as GET, handler as POST, handler as DELETE }
+export { handler as GET, handler as POST }

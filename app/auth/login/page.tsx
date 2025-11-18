@@ -60,9 +60,10 @@ export default function LoginPage() {
           }),
         })
 
+        const data = await response.json()
+
         if (!response.ok) {
-          const data = await response.json()
-          setError(data.error || "Sign up failed")
+          setError(data.message || "Sign up failed")
           setLoading(false)
           return
         }
@@ -76,6 +77,10 @@ export default function LoginPage() {
 
         if (result?.ok) {
           router.push("/dashboard")
+          router.refresh()
+        } else {
+          setError(result?.error || "Failed to sign in after registration")
+          setLoading(false)
         }
       } else {
         // Sign in logic
@@ -86,14 +91,16 @@ export default function LoginPage() {
         })
 
         if (!result?.ok) {
-          setError(result?.error || "Invalid email or password")
+          setError("Invalid email or password")
           setLoading(false)
           return
         }
 
         router.push("/dashboard")
+        router.refresh()
       }
     } catch (err) {
+      console.error("Auth error:", err)
       setError("An error occurred. Please try again.")
       setLoading(false)
     }
@@ -111,7 +118,7 @@ export default function LoginPage() {
       <div className="hidden lg:flex flex-1 bg-linear-to-br from-emerald-600 via-teal-600 to-cyan-600 p-12 items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-20 left-20 w-72 h-72 bg-white/10 rounded-full blur-3xl animate-pulse" />
-          <div className="absolute bottom-20 right-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse animation-delay-1000" />
+          <div className="absolute bottom-20 right-20 w-96 h-96 bg-white/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: "1s" }} />
         </div>
 
         <div className="relative z-10 max-w-md text-white w-full">
@@ -173,11 +180,11 @@ export default function LoginPage() {
                   <p className="text-sm text-white/80">Active Users</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-bold">100+</p>
+                  <p className="text-3xl font-bold">1000+</p>
                   <p className="text-sm text-white/80">Content Created</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-3xl font-bold">3.9/5</p>
+                  <p className="text-3xl font-bold">4.9/5</p>
                   <p className="text-sm text-white/80">User Rating</p>
                 </div>
               </div>
@@ -309,12 +316,6 @@ export default function LoginPage() {
                       <label htmlFor="password" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                         Password
                       </label>
-                      <Link 
-                        href="/auth/forgot-password"
-                        className="text-sm font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
-                      >
-                        Forgot password?
-                      </Link>
                     </div>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -348,7 +349,7 @@ export default function LoginPage() {
 
                   <Button 
                     type="submit" 
-                    className="cursor-pointer w-full h-11 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 font-medium"
+                    className="w-full h-11 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 font-medium"
                     disabled={loading}
                   >
                     {loading ? (
@@ -478,7 +479,7 @@ export default function LoginPage() {
 
                   <Button 
                     type="submit" 
-                    className="cursor-pointer w-full h-11 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 font-medium"
+                    className="w-full h-11 bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 font-medium"
                     disabled={loading}
                   >
                     {loading ? (
@@ -496,16 +497,18 @@ export default function LoginPage() {
                 </form>
               </div>
             </div>
-          {/* Toggle Link */}
-          <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
-            {isSignUp ? "Already have an account? " : "Don't have an account? "}
-            <button
-              onClick={toggleMode}
-              className="cursor-pointer font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
-            >
-              {isSignUp ? "Sign in" : "Sign up for free"}
-            </button>
-          </p>
+
+            {/* Toggle Link */}
+            <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-6">
+              {isSignUp ? "Already have an account? " : "Don't have an account? "}
+              <button
+                onClick={toggleMode}
+                type="button"
+                className="font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400 dark:hover:text-emerald-300"
+              >
+                {isSignUp ? "Sign in" : "Sign up for free"}
+              </button>
+            </p>
           </div>
 
         </div>
