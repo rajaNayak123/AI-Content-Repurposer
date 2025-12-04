@@ -58,11 +58,11 @@ model Generation {
   createdAt      DateTime @default(now())
   sourceUrl      String
   
-  resultTweets   Json     
-  resultLinkedin String   
+  resultTweets   Json?     
+  resultLinkedin String?   
   resultInstagram String? 
   resultFacebook  String? 
-  resultEmail    String   
+  resultEmail    String?   
   
   userId         String
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)

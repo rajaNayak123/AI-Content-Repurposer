@@ -26,7 +26,11 @@ function extractText(result: any): string {
   return "";
 }
 
-export async function generateContent(sourceText: string, tone: string = "professional") {
+export async function generateContent(
+  sourceText: string, 
+  tone: string = "professional",
+  platforms: string[] = ['twitter', 'linkedin', 'instagram', 'facebook', 'email']
+) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("Missing GEMINI_API_KEY");
@@ -45,49 +49,62 @@ export async function generateContent(sourceText: string, tone: string = "profes
 
     const toneDescription = toneDescriptions[tone.toLowerCase()] || toneDescriptions.professional;
 
+    // Build platform-specific instructions dynamically
+    const platformInstructions: Record<string, string> = {
+      twitter: `"tweets": (For X/Twitter)
+Must be an array containing exactly 5 unique tweets.
+Each tweet must be under 280 characters.
+The tone should be ${toneDescription}.
+Must include 2-3 relevant, high-traffic hashtags.
+Must include at least one relevant emoji.
+Each tweet must highlight a different angle or key takeaway.`,
+
+      linkedin: `"linkedin":
+Must be a single string containing a professional LinkedIn post (approx 150 words).
+Start with a strong hook. Tone: ${toneDescription}.
+Structure with short paragraphs for readability.
+End with a clear CTA or question.`,
+
+      instagram: `"instagram":
+Must be a single string containing an Instagram caption.
+Tone: ${toneDescription}.
+Include "Link in bio" or similar CTA if relevant.
+Must include a block of 10-15 relevant hashtags at the end.`,
+
+      facebook: `"facebook":
+Must be a single string containing a Facebook post.
+Tone: ${toneDescription}.
+Slightly longer form than Twitter but more casual than LinkedIn.
+Encourage discussion/comments.`,
+
+      email: `"email":
+Must be a single string containing a concise email newsletter summary (approx 100 words).
+Tone: ${toneDescription}.
+Subject line style hook. Clear value proposition.`
+    };
+
+    // Build the JSON structure specification
+    const platformKeys = platforms.map(p => `"${p}"`).join(', ');
+    const selectedInstructions = platforms
+      .map(p => platformInstructions[p])
+      .filter(Boolean)
+      .join('\n\n');
+
     const systemPrompt = `You are an expert social media marketing assistant and content repurposing specialist. Your task is to take a piece of source content and transform it into a structured JSON object containing assets for different platforms.
 
-    IMPORTANT: The user has selected a "${tone}" tone. All content you generate must reflect this tone: ${toneDescription}.
+IMPORTANT: The user has selected a "${tone}" tone. All content you generate must reflect this tone: ${toneDescription}.
 
-    Based only on the source content I provide below, generate a single, valid JSON object with the following keys: tweets, linkedin, instagram, facebook, and email.
-    
-    Key Requirements:
-    
-    "tweets": (For X/Twitter)
-    Must be an array containing exactly 5 unique tweets.
-    Each tweet must be under 280 characters.
-    The tone should be ${toneDescription}.
-    Must include 2-3 relevant, high-traffic hashtags.
-    Must include at least one relevant emoji.
-    Each tweet must highlight a different angle or key takeaway.
-    
-    "linkedin":
-    Must be a single string containing a professional LinkedIn post (approx 150 words).
-    Start with a strong hook. Tone: ${toneDescription}.
-    Structure with short paragraphs for readability.
-    End with a clear CTA or question.
-    
-    "instagram":
-    Must be a single string containing an Instagram caption.
-    Tone: ${toneDescription}.
-    Include "Link in bio" or similar CTA if relevant.
-    Must include a block of 10-15 relevant hashtags at the end.
-    
-    "facebook":
-    Must be a single string containing a Facebook post.
-    Tone: ${toneDescription}.
-    Slightly longer form than Twitter but more casual than LinkedIn.
-    Encourage discussion/comments.
-    
-    "email":
-    Must be a single string containing a concise email newsletter summary (approx 100 words).
-    Tone: ${toneDescription}.
-    Subject line style hook. Clear value proposition.
-    
-    Output Constraints:
-    Return ONLY the raw, valid JSON object starting with { and ending with }.
-    Do NOT include any introductory text, explanations, or markdown formatting like json ...
-    `;
+Based only on the source content I provide below, generate a single, valid JSON object with the following keys: ${platformKeys}.
+
+Key Requirements:
+
+${selectedInstructions}
+
+Output Constraints:
+Return ONLY the raw, valid JSON object starting with { and ending with }.
+Do NOT include any introductory text, explanations, or markdown formatting like \`\`\`json ...\`\`\`
+Only include the platforms requested: ${platformKeys}
+`;
 
     const prompt = `${systemPrompt}\n\nContent:\n${sourceText}`;
 
@@ -119,16 +136,46 @@ export async function generateContent(sourceText: string, tone: string = "profes
 
     const data = JSON.parse(jsonMatch[0]);
 
-    // Validation
-    if (!Array.isArray(data.tweets) || data.tweets.length < 1) throw new Error("Tweets invalid");
-    if (typeof data.linkedin !== "string") throw new Error("LinkedIn invalid");
-    if (typeof data.email !== "string") throw new Error("Email invalid");
-    
-    // Allow fallback if AI misses these
-    data.instagram = typeof data.instagram === "string" ? data.instagram : "Instagram caption generation failed.";
-    data.facebook = typeof data.facebook === "string" ? data.facebook : "Facebook post generation failed.";
+    // Validation - only validate fields that were requested
+    if (platforms.includes('twitter')) {
+      if (!Array.isArray(data.tweets) || data.tweets.length < 1) {
+        throw new Error("Tweets invalid");
+      }
+    }
 
-    return data;
+    if (platforms.includes('linkedin')) {
+      if (typeof data.linkedin !== "string") {
+        throw new Error("LinkedIn invalid");
+      }
+    }
+
+    if (platforms.includes('email')) {
+      if (typeof data.email !== "string") {
+        throw new Error("Email invalid");
+      }
+    }
+
+    if (platforms.includes('instagram')) {
+      if (typeof data.instagram !== "string") {
+        data.instagram = "Instagram caption generation failed.";
+      }
+    }
+
+    if (platforms.includes('facebook')) {
+      if (typeof data.facebook !== "string") {
+        data.facebook = "Facebook post generation failed.";
+      }
+    }
+
+    // Return only the requested platforms
+    const result_data: Record<string, any> = {};
+    platforms.forEach(platform => {
+      if (data[platform] !== undefined) {
+        result_data[platform] = data[platform];
+      }
+    });
+
+    return result_data;
   } catch (err: any) {
     console.error("Gemini error:", err);
     throw new Error(err.message || "Failed to generate content");

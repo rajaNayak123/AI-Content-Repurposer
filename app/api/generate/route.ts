@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    const { url, tone } = await request.json()
+    const { url, tone, platforms } = await request.json()
 
     if (!url) {
       return NextResponse.json({ message: "URL is required" }, { status: 400 })
@@ -36,6 +36,12 @@ export async function POST(request: NextRequest) {
     if (!isValidUrl(url)) {
       return NextResponse.json({ 
         message: "Invalid URL format. Please provide a valid URL." 
+      }, { status: 400 })
+    }
+
+    if (!platforms || !Array.isArray(platforms) || platforms.length === 0) {
+      return NextResponse.json({ 
+        message: "At least one platform must be selected" 
       }, { status: 400 })
     }
 
@@ -102,7 +108,7 @@ export async function POST(request: NextRequest) {
     // Generate content AFTER deducting credits
     let aiResult
     try {
-      aiResult = await generateContent(sourceText, selectedTone)
+      aiResult = await generateContent(sourceText, selectedTone, platforms)
       
       if (!aiResult) {
         throw new Error("Failed to generate content")
@@ -121,15 +127,15 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
-    // Create Generation record
+    // Create Generation record with nullable fields
     const generation = await prisma.generation.create({
       data: {
         sourceUrl: url,
-        resultTweets: aiResult.tweets || [],
-        resultLinkedin: aiResult.linkedin || "",
-        resultInstagram: aiResult.instagram || "", 
-        resultFacebook: aiResult.facebook || "",   
-        resultEmail: aiResult.email || "",
+        resultTweets: aiResult.tweets || null,
+        resultLinkedin: aiResult.linkedin || null,
+        resultInstagram: aiResult.instagram || null, 
+        resultFacebook: aiResult.facebook || null,   
+        resultEmail: aiResult.email || null,
         userId: user.id,
       },
     })

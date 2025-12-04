@@ -11,11 +11,11 @@ import ResultsDisplay from "@/components/results-display"
 import { Sparkles, History, CreditCard, LogOut, Settings, Home, ChevronRight } from "lucide-react"
 
 interface GenerationResult {
-  tweets: string[]
-  linkedin: string
-  instagram: string 
-  facebook: string  
-  email: string
+  tweets?: string[]
+  linkedin?: string
+  instagram?: string 
+  facebook?: string  
+  email?: string
 }
 
 export default function DashboardPage() {
@@ -62,7 +62,7 @@ export default function DashboardPage() {
     )
   }
 
-  const handleGenerate = async (url: string, tone: string) => {
+  const handleGenerate = async (url: string, tone: string, platforms: string[]) => {
     setLoading(true)
     setError("")
     setResults(null)
@@ -71,7 +71,7 @@ export default function DashboardPage() {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url, tone }),
+        body: JSON.stringify({ url, tone, platforms }),
       })
 
       const data = await response.json()
@@ -191,7 +191,7 @@ export default function DashboardPage() {
                   Generate Your Social Content
                 </CardTitle>
                 <CardDescription className="text-base text-gray-600 dark:text-gray-400">
-                  Paste your YouTube video URL or blog post link and let AI do the magic ✨
+                  Paste your YouTube video URL or blog post link and select your platforms ✨
                 </CardDescription>
               </div>
             </CardHeader>
@@ -237,7 +237,7 @@ export default function DashboardPage() {
                      Ready to Transform Your Content?
                    </h3>
                    <p className="text-gray-600 dark:text-gray-400 mb-6">
-                     Paste a YouTube video or blog post URL above and watch AI generate tweets, LinkedIn, Instagram, and Facebook posts in seconds.
+                     Paste a YouTube video or blog post URL above, select your platforms, and watch AI generate content in seconds.
                    </p>
                  </div>
                </CardContent>
