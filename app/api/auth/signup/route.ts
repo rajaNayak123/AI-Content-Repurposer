@@ -59,9 +59,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(
       { 
-        message: "User created successfully", 
+        message: "User created successfully. Please login.", 
         userId: user.id,
-        success: true 
+        success: true,
+        redirectTo: "/auth/login" 
       }, 
       { status: 201 }
     )

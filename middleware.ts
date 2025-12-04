@@ -15,6 +15,12 @@ export async function middleware(req: NextRequest) {
 
   const isProtectedPath = protectedPaths.some((path) => pathname.startsWith(path))
   const isAuthPath = authPaths.some((path) => pathname.startsWith(path))
+  const isHomePage = pathname === "/"
+
+  // If user is logged in and tries to access home page, redirect to dashboard
+  if (token && isHomePage) {
+    return NextResponse.redirect(new URL("/dashboard", req.url))
+  }
 
   // If user is logged in and tries to access auth pages, redirect to dashboard
   if (token && isAuthPath) {
@@ -33,6 +39,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
     "/dashboard/:path*",
     "/history/:path*",
     "/settings/:path*",

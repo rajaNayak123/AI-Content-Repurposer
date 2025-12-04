@@ -70,19 +70,9 @@ export default function SignupPage() {
         setLoading(false)
         return
       }
-
-      // Auto sign in after signup
-      const result = await signIn("credentials", {
-        email: formData.email,
-        password: formData.password,
-        redirect: false,
-      })
-
-      if (result?.ok) {
-        router.push("/dashboard")
-      } else {
-        router.push("/auth/login")
-      }
+      
+      // Redirect to login page after successful signup
+      router.push("/auth/login")
     } catch (err) {
       setError("An error occurred. Please try again.")
       setLoading(false)

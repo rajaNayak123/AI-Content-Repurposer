@@ -67,21 +67,19 @@ export default function LoginPage() {
           setLoading(false)
           return
         }
-
-        // Auto sign in after signup
-        const result = await signIn("credentials", {
+  
+        // Switch to login form after successful signup
+        setIsSignUp(false)
+        setFormData({ 
+          name: "", 
           email: formData.email,
-          password: formData.password,
-          redirect: false,
+          password: "", 
+          confirmPassword: "" 
         })
-
-        if (result?.ok) {
-          router.push("/dashboard")
-          router.refresh()
-        } else {
-          setError(result?.error || "Failed to sign in after registration")
-          setLoading(false)
-        }
+        setLoading(false)
+        setError("")
+        alert("Account created successfully! Please log in with your credentials.")
+        
       } else {
         // Sign in logic
         const result = await signIn("credentials", {
