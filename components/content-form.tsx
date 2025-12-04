@@ -14,9 +14,10 @@ interface ContentFormProps {
   onSubmit: (url: string, tone: string, platforms: string[]) => Promise<void>
   loading: boolean
   credits: number
+  onBuyCredits: () => void
 }
 
-export default function ContentForm({ onSubmit, loading, credits }: ContentFormProps) {
+export default function ContentForm({ onSubmit, loading, credits, onBuyCredits }: ContentFormProps) {
   const [url, setUrl] = useState("")
   const [tone, setTone] = useState("professional")
   const [error, setError] = useState("")
@@ -62,6 +63,11 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
     e.preventDefault()
     setError("")
 
+    if (credits <= 0) {
+      onBuyCredits()
+      return
+    }
+
     if (!url.trim()) {
       setError("Please enter a URL")
       return
@@ -69,11 +75,6 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
 
     if (!validateUrl(url)) {
       setError("Please enter a valid YouTube or blog URL")
-      return
-    }
-
-    if (credits <= 0) {
-      setError("You are out of credits")
       return
     }
 
@@ -103,7 +104,7 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
           placeholder="Paste YouTube link or blog URL..."
           value={url}
           onChange={(e) => setUrl(e.target.value)}
-          disabled={loading || credits <= 0}
+          disabled={loading}
           className={`
             h-13
             flex-1
@@ -132,7 +133,7 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
           `}
         />
 
-        <Select value={tone} onValueChange={(value) => setTone(value)} disabled={loading || credits <= 0}>
+        <Select value={tone} onValueChange={(value) => setTone(value)} disabled={loading}>
           <SelectTrigger className="p-6 rounded-2xl border border-gray-300 bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 ease-in-out focus:border-blue-500 focus:ring-2 focus:ring-blue-300 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed">
             <SelectValue placeholder="Select tone" />
           </SelectTrigger>
@@ -146,7 +147,7 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
           </SelectContent>
         </Select>
 
-        <Button type="submit" disabled={loading || credits <= 0} className="px-8 h-13 rounded-2xl cursor-pointer">
+        <Button type="submit" disabled={loading} className="px-8 h-13 rounded-2xl cursor-pointer">
           {loading ? "Generating..." : "Generate"}
         </Button>
       </div>
@@ -166,14 +167,14 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
                   ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/20' 
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
                 }
-                ${loading || credits <= 0 ? 'opacity-50 cursor-not-allowed' : ''}
+                ${loading ? 'opacity-50 cursor-not-allowed' : ''}
               `}
             >
               <Checkbox
                 id={id}
                 checked={platforms[id as keyof typeof platforms]}
                 onCheckedChange={() => handlePlatformToggle(id as keyof typeof platforms)}
-                disabled={loading || credits <= 0}
+                disabled={loading}
               />
               <Label
                 htmlFor={id}
@@ -188,7 +189,6 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
       </div>
 
       {error && <p className="text-red-500 text-sm">{error}</p>}
-      {credits <= 0 && <p className="text-yellow-600 text-sm">You have no credits left. Contact support to upgrade.</p>}
     </form>
   )
 }

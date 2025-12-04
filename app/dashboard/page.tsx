@@ -4,11 +4,18 @@ import { useSession, signOut } from "next-auth/react"
 import { redirect, useRouter } from "next/navigation"
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Script from "next/script"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import ContentForm from "@/components/content-form"
 import ResultsDisplay from "@/components/results-display"
-import { Sparkles, History, CreditCard, LogOut, Settings, Home, ChevronRight } from "lucide-react"
+import { Sparkles, History, CreditCard, LogOut, Settings, Home, ChevronRight, X, CheckCircle, AlertCircle } from "lucide-react"
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 
 interface GenerationResult {
   tweets?: string[]
@@ -26,6 +33,11 @@ export default function DashboardPage() {
   const [credits, setCredits] = useState(0)
   const [creditsLoading, setCreditsLoading] = useState(true)
   const [error, setError] = useState("")
+  
+  // Payment Modal State
+  const [showBuyCreditsModal, setShowBuyCreditsModal] = useState(false)
+  const [paymentLoading, setPaymentLoading] = useState(false)
+  const [notification, setNotification] = useState<{message: string, type: 'success'|'error'} | null>(null)
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -48,22 +60,77 @@ export default function DashboardPage() {
     }
   }
 
-  if (status === "unauthenticated") {
-    redirect("/auth/login")
-  }
+  const showNotification = (message: string, type: "success" | "error") => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
-  if (status === "loading") {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-gray-50 to-slate-100 dark:from-gray-950 dark:to-slate-950">
-        <div className="flex flex-col items-center gap-4">
-          <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
-          <span className="text-lg font-medium text-gray-600 dark:text-gray-400">Loading your dashboard...</span>
-        </div>
-      </div>
-    )
-  }
+  const handleBuyCredits = async () => {
+    setPaymentLoading(true);
+    try {
+      const orderResponse = await fetch("/api/payment/order", { method: "POST" });
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok) throw new Error(orderData.message || "Failed to create order");
+
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "ContentRepurpose",
+        description: "Purchase 10 Credits",
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          try {
+            const verifyResponse = await fetch("/api/payment/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            if (verifyResponse.ok) {
+              showNotification("Credits added successfully!", "success");
+              await fetchUserData(); // Refresh credits
+              await updateSession(); // Sync session
+              setShowBuyCreditsModal(false); // Close modal
+            } else {
+              showNotification("Payment verification failed", "error");
+            }
+          } catch (err) {
+            showNotification("Verification error", "error");
+          }
+        },
+        prefill: {
+          name: session?.user?.name,
+          email: session?.user?.email,
+        },
+        theme: { color: "#059669" },
+      };
+
+      const rzp1 = new window.Razorpay(options);
+      rzp1.open();
+      rzp1.on('payment.failed', function (response: any){
+        showNotification(response.error.description || "Payment failed", "error");
+      });
+
+    } catch (error: any) {
+      showNotification(error.message || "Payment initiation failed", "error");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
 
   const handleGenerate = async (url: string, tone: string, platforms: string[]) => {
+    // Check credits again as a safeguard
+    if (credits <= 0) {
+        setShowBuyCreditsModal(true);
+        return;
+    }
+
     setLoading(true)
     setError("")
     setResults(null)
@@ -93,8 +160,25 @@ export default function DashboardPage() {
     }
   }
 
+  if (status === "unauthenticated") {
+    redirect("/auth/login")
+  }
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-linear-to-br from-gray-50 to-slate-100 dark:from-gray-950 dark:to-slate-950">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-emerald-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-lg font-medium text-gray-600 dark:text-gray-400">Loading your dashboard...</span>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="flex min-h-screen bg-linear-to-br from-gray-50 via-white to-slate-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950">
+      <Script id="razorpay-checkout-js" src="https://checkout.razorpay.com/v1/checkout.js" />
+      
       {/* Sidebar */}
       <aside className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col">
         <div className="p-6 border-b border-gray-200 dark:border-gray-800">
@@ -152,7 +236,7 @@ export default function DashboardPage() {
               variant="secondary" 
               size="sm" 
               className="w-full mt-3 bg-white/20 hover:bg-white/30 text-white border-0 cursor-pointer"
-              onClick={() => router.push('/settings')}
+              onClick={() => setShowBuyCreditsModal(true)}
             >
               <CreditCard className="h-4 w-4 mr-2" />
               Buy Credits
@@ -202,7 +286,12 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent className="pt-8 pb-8">
-              <ContentForm onSubmit={handleGenerate} loading={loading} credits={credits} />
+              <ContentForm 
+                onSubmit={handleGenerate} 
+                loading={loading} 
+                credits={credits} 
+                onBuyCredits={() => setShowBuyCreditsModal(true)}
+              />
             </CardContent>
           </Card>
 
@@ -252,6 +341,54 @@ export default function DashboardPage() {
           )}
         </main>
       </div>
+
+      {/* Buy Credits Modal */}
+      {showBuyCreditsModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm animate-in fade-in zoom-in duration-200">
+          <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-gray-200 dark:border-gray-800 p-6 relative">
+            <button 
+                onClick={() => setShowBuyCreditsModal(false)}
+                className="absolute top-4 right-4 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+            >
+                <X className="h-5 w-5" />
+            </button>
+            
+            <div className="text-center space-y-4">
+                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/30 rounded-full flex items-center justify-center mx-auto">
+                    <Sparkles className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Run out of credits?</h3>
+                <p className="text-gray-600 dark:text-gray-400">
+                    Get 10 more credits to keep generating amazing content.
+                </p>
+                
+                <div className="py-4">
+                    <div className="text-3xl font-bold text-gray-900 dark:text-white">
+                        ₹99 <span className="text-sm font-normal text-gray-500">/ 10 credits</span>
+                    </div>
+                </div>
+
+                <Button 
+                    onClick={handleBuyCredits} 
+                    disabled={paymentLoading}
+                    className="w-full bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 h-12 text-lg"
+                >
+                    {paymentLoading ? "Processing..." : "Buy Now"}
+                </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Notification Toast */}
+      {notification && (
+        <div className={`fixed top-4 right-4 z-60 p-4 rounded-lg shadow-lg border flex items-center gap-3 animate-in slide-in-from-top-2 ${
+            notification.type === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-red-50 border-red-200 text-red-800'
+        }`}>
+            {notification.type === 'success' ? <CheckCircle className="h-5 w-5"/> : <AlertCircle className="h-5 w-5"/>}
+            <p className="font-medium">{notification.message}</p>
+        </div>
+      )}
     </div>
-  );
+  )
 }
