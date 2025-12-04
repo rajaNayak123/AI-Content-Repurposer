@@ -76,11 +76,46 @@ export async function POST(request: NextRequest) {
       }, { status: 400 })
     }
 
-    // Generate content
-    const aiResult = await generateContent(sourceText)
-    
-    if (!aiResult) {
-      throw new Error("Failed to generate content")
+    // Use Prisma transaction to atomically decrement credits
+    // and ensure user has sufficient balance
+    let updatedUser
+    try {
+      updatedUser = await prisma.user.update({
+        where: { 
+          id: user.id,
+          credits: { gte: 1 } // Only update if credits >= 1
+        },
+        data: { 
+          credits: { decrement: 1 } 
+        },
+      })
+    } catch (error) {
+      // If update fails, user doesn't have enough credits (race condition caught)
+      return NextResponse.json({ 
+        message: "Insufficient credits. Please purchase more to continue." 
+      }, { status: 403 })
+    }
+
+    // Generate content AFTER deducting credits
+    let aiResult
+    try {
+      aiResult = await generateContent(sourceText)
+      
+      if (!aiResult) {
+        throw new Error("Failed to generate content")
+      }
+    } catch (error: any) {
+      // If generation fails, refund the credit
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { credits: { increment: 1 } },
+      })
+      
+      console.error("Content generation error:", error)
+      return NextResponse.json({ 
+        message: "Failed to generate content. Your credit has been refunded.",
+        error: error.message 
+      }, { status: 500 })
     }
 
     // Create Generation record
@@ -92,15 +127,8 @@ export async function POST(request: NextRequest) {
         resultInstagram: aiResult.instagram || "", 
         resultFacebook: aiResult.facebook || "",   
         resultEmail: aiResult.email || "",
-        // resultImagePrompts removed
         userId: user.id,
       },
-    })
-
-    // Decrement credits
-    const updatedUser = await prisma.user.update({
-      where: { id: user.id },
-      data: { credits: user.credits - 1 },
     })
 
     return NextResponse.json(
