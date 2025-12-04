@@ -4,6 +4,7 @@ import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
+import Script from "next/script";
 import {
   Card,
   CardContent,
@@ -32,6 +33,12 @@ interface UserData {
   name: string | null;
   email: string | null;
   credits: number;
+}
+
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
 }
 
 // A simple toast-like notification component
@@ -92,6 +99,9 @@ export default function SettingsPage() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // Payment State
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Notification state
   const [notification, setNotification] = useState<{
@@ -207,6 +217,76 @@ export default function SettingsPage() {
     }
   };
 
+  const handleBuyCredits = async () => {
+    setPaymentLoading(true);
+    try {
+      // 1. Create Order
+      const orderResponse = await fetch("/api/payment/order", {
+        method: "POST",
+      });
+      const orderData = await orderResponse.json();
+
+      if (!orderResponse.ok) {
+        throw new Error(orderData.message || "Failed to create order");
+      }
+
+      // 2. Initialize Razorpay
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "ContentRepurpose",
+        description: "Purchase 10 Credits",
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          // 3. Verify Payment
+          try {
+            const verifyResponse = await fetch("/api/payment/verify", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
+
+            const verifyData = await verifyResponse.json();
+
+            if (verifyResponse.ok) {
+              showNotification("Credits added successfully!", "success");
+              fetchUserData(); // Refresh data to show new credits
+            } else {
+              showNotification("Payment verification failed", "error");
+            }
+          } catch (err) {
+            showNotification("Verification error", "error");
+          }
+        },
+        prefill: {
+          name: userData?.name,
+          email: userData?.email,
+        },
+        theme: {
+          color: "#059669", // Emerald-600
+        },
+      };
+
+      const rzp1 = new window.Razorpay(options);
+      rzp1.open();
+      
+      rzp1.on('payment.failed', function (response: any){
+        showNotification(response.error.description || "Payment failed", "error");
+      });
+
+    } catch (error: any) {
+      console.error("Payment error:", error);
+      showNotification(error.message || "Payment initiation failed", "error");
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
   if (status === "loading" || isLoadingUserData || !userData) {
     return (
       <div className="flex min-h-screen bg-linear-to-br from-gray-50 via-white to-slate-50 dark:from-gray-950 dark:via-gray-900 dark:to-slate-950">
@@ -225,6 +305,10 @@ export default function SettingsPage() {
 
   return (
     <>
+      <Script
+        id="razorpay-checkout-js"
+        src="https://checkout.razorpay.com/v1/checkout.js"
+      />
       {notification && (
         <Notification
           message={notification.message}
@@ -291,10 +375,16 @@ export default function SettingsPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                className="w-full mt-3 bg-white/20 hover:bg-white/30 text-white border-0"
+                onClick={handleBuyCredits}
+                disabled={paymentLoading}
+                className="w-full mt-3 bg-white/20 hover:bg-white/30 text-white border-0 cursor-pointer"
               >
-                <CreditCard className="h-4 w-4 mr-2" />
-                Buy Credits
+                {paymentLoading ? "Processing..." : (
+                  <>
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Buy Credits
+                  </>
+                )}
               </Button>
             </div>
 
@@ -486,9 +576,17 @@ export default function SettingsPage() {
                     credits available
                   </span>
                 </div>
-                <Button className="bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Buy More Credits
+                <Button 
+                  className="bg-linear-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700"
+                  onClick={handleBuyCredits}
+                  disabled={paymentLoading}
+                >
+                  {paymentLoading ? "Processing..." : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Buy 10 Credits (₹99)
+                    </>
+                  )}
                 </Button>
               </CardContent>
             </Card>

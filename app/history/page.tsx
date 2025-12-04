@@ -1,7 +1,7 @@
 "use client"
 
 import { useSession, signOut } from "next-auth/react"
-import { redirect } from "next/navigation"
+import { redirect, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -25,6 +25,7 @@ interface HistoryItem {
 
 export default function HistoryPage() {
   const { data: session, status } = useSession()
+  const router = useRouter()
   const [generations, setGenerations] = useState<HistoryItem[]>([])
   const [loading, setLoading] = useState(true)
   const [credits, setCredits] = useState(0) 
@@ -176,7 +177,12 @@ export default function HistoryPage() {
               <span className="text-3xl font-bold">{creditsLoading ? '...' : credits}</span>
               <span className="text-sm opacity-80">available</span>
             </div>
-            <Button variant="secondary" size="sm" className="w-full mt-3 bg-white/20 hover:bg-white/30 text-white border-0">
+            <Button 
+              variant="secondary" 
+              size="sm" 
+              className="w-full mt-3 bg-white/20 hover:bg-white/30 text-white border-0 cursor-pointer"
+              onClick={() => router.push('/settings')}
+            >
               <CreditCard className="h-4 w-4 mr-2" />
               Buy Credits
             </Button>
