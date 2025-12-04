@@ -49,6 +49,7 @@ model User {
   accounts      Account[]
   sessions      Session[]
   generations   Generation[]
+  payments      Payment[]
 
   @@map("users")
 }
@@ -68,4 +69,21 @@ model Generation {
   user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("generations")
+}
+
+model Payment {
+  id                String   @id @default(cuid()) @map("_id")
+  razorpayOrderId   String   @unique
+  razorpayPaymentId String?
+  amount            Int      // Amount in lowest denomination (e.g., paise)
+  status            String   @default("pending") // pending, success, failed
+  creditsPurchased  Int      @default(10)
+  
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@map("payments")
 }
