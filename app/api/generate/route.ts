@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       }, { status: 403 })
     }
 
-    const { url } = await request.json()
+    const { url, tone } = await request.json()
 
     if (!url) {
       return NextResponse.json({ message: "URL is required" }, { status: 400 })
@@ -38,6 +38,9 @@ export async function POST(request: NextRequest) {
         message: "Invalid URL format. Please provide a valid URL." 
       }, { status: 400 })
     }
+
+    // Default to professional if no tone provided
+    const selectedTone = tone || "professional"
 
     let sourceText = ""
     const isYoutube = url.includes("youtube.com") || url.includes("youtu.be")
@@ -99,7 +102,7 @@ export async function POST(request: NextRequest) {
     // Generate content AFTER deducting credits
     let aiResult
     try {
-      aiResult = await generateContent(sourceText)
+      aiResult = await generateContent(sourceText, selectedTone)
       
       if (!aiResult) {
         throw new Error("Failed to generate content")

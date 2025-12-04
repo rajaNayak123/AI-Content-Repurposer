@@ -26,14 +26,28 @@ function extractText(result: any): string {
   return "";
 }
 
-export async function generateContent(sourceText: string) {
+export async function generateContent(sourceText: string, tone: string = "professional") {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) throw new Error("Missing GEMINI_API_KEY");
 
     const ai = new GoogleGenAI({ apiKey });
 
+    // Map tone to detailed descriptions for better AI understanding
+    const toneDescriptions: Record<string, string> = {
+      professional: "polished, insightful, and business-appropriate",
+      casual: "relaxed, friendly, and conversational",
+      funny: "humorous, witty, and entertaining with light-hearted jokes",
+      controversial: "bold, thought-provoking, and debate-sparking (while remaining respectful)",
+      inspirational: "motivational, uplifting, and empowering",
+      educational: "informative, clear, and teaching-focused"
+    };
+
+    const toneDescription = toneDescriptions[tone.toLowerCase()] || toneDescriptions.professional;
+
     const systemPrompt = `You are an expert social media marketing assistant and content repurposing specialist. Your task is to take a piece of source content and transform it into a structured JSON object containing assets for different platforms.
+
+    IMPORTANT: The user has selected a "${tone}" tone. All content you generate must reflect this tone: ${toneDescription}.
 
     Based only on the source content I provide below, generate a single, valid JSON object with the following keys: tweets, linkedin, instagram, facebook, and email.
     
@@ -42,31 +56,32 @@ export async function generateContent(sourceText: string) {
     "tweets": (For X/Twitter)
     Must be an array containing exactly 5 unique tweets.
     Each tweet must be under 280 characters.
-    The tone should be engaging, catchy, and high-energy.
+    The tone should be ${toneDescription}.
     Must include 2-3 relevant, high-traffic hashtags.
     Must include at least one relevant emoji.
     Each tweet must highlight a different angle or key takeaway.
     
     "linkedin":
     Must be a single string containing a professional LinkedIn post (approx 150 words).
-    Start with a strong hook. Tone: polished, insightful, B2B suitable.
+    Start with a strong hook. Tone: ${toneDescription}.
     Structure with short paragraphs for readability.
     End with a clear CTA or question.
     
     "instagram":
     Must be a single string containing an Instagram caption.
-    Tone: Casual, visual, and lifestyle-oriented or educational depending on context.
+    Tone: ${toneDescription}.
     Include "Link in bio" or similar CTA if relevant.
     Must include a block of 10-15 relevant hashtags at the end.
     
     "facebook":
     Must be a single string containing a Facebook post.
-    Tone: Conversational, community-focused, and shareable.
+    Tone: ${toneDescription}.
     Slightly longer form than Twitter but more casual than LinkedIn.
     Encourage discussion/comments.
     
     "email":
     Must be a single string containing a concise email newsletter summary (approx 100 words).
+    Tone: ${toneDescription}.
     Subject line style hook. Clear value proposition.
     
     Output Constraints:

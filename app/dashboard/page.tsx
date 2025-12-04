@@ -62,7 +62,7 @@ export default function DashboardPage() {
     )
   }
 
-  const handleGenerate = async (url: string) => {
+  const handleGenerate = async (url: string, tone: string) => {
     setLoading(true)
     setError("")
     setResults(null)
@@ -71,7 +71,7 @@ export default function DashboardPage() {
       const response = await fetch("/api/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify({ url, tone }),
       })
 
       const data = await response.json()

@@ -5,15 +5,17 @@ import type React from "react"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 interface ContentFormProps {
-  onSubmit: (url: string) => Promise<void>
+  onSubmit: (url: string, tone: string) => Promise<void>
   loading: boolean
   credits: number
 }
 
 export default function ContentForm({ onSubmit, loading, credits }: ContentFormProps) {
   const [url, setUrl] = useState("")
+  const [tone, setTone] = useState("professional")
   const [error, setError] = useState("")
 
   const validateUrl = (url: string): boolean => {
@@ -52,47 +54,60 @@ export default function ContentForm({ onSubmit, loading, credits }: ContentFormP
       return
     }
 
-    await onSubmit(url)
+    await onSubmit(url, tone)
     setUrl("")
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="flex gap-2">
-      <Input
-  type="url"
-  placeholder="Paste YouTube link or blog URL..."
-  value={url}
-  onChange={(e) => setUrl(e.target.value)}
-  disabled={loading || credits <= 0}
-  className={`
-    h-12
-    flex-1
-    rounded-2xl
-    border
-    border-gray-300
-    bg-white/80
-    px-4
-    py-3
-    text-base
-    text-gray-700
-    placeholder-gray-400
-    shadow-sm
-    backdrop-blur-sm
-    transition-all
-    duration-300
-    ease-in-out
-    focus:border-blue-500
-    focus:ring-2
-    focus:ring-blue-300
-    focus:shadow-lg
-    hover:shadow-md
-    disabled:opacity-60
-    disabled:cursor-not-allowed
-    outline-none
-  `}
-/>
+        <Input
+          type="url"
+          placeholder="Paste YouTube link or blog URL..."
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          disabled={loading || credits <= 0}
+          className={`
+            h-12
+            flex-1
+            rounded-2xl
+            border
+            border-gray-300
+            bg-white/80
+            px-4
+            py-3
+            text-base
+            text-gray-700
+            placeholder-gray-400
+            shadow-sm
+            backdrop-blur-sm
+            transition-all
+            duration-300
+            ease-in-out
+            focus:border-blue-500
+            focus:ring-2
+            focus:ring-blue-300
+            focus:shadow-lg
+            hover:shadow-md
+            disabled:opacity-60
+            disabled:cursor-not-allowed
+            outline-none
+          `}
+        />
 
+        <Select value={tone} onValueChange={setTone} disabled={loading || credits <= 0}>
+          <SelectTrigger className="h-12 w-48 rounded-2xl border border-gray-300 bg-white/80 shadow-sm backdrop-blur-sm transition-all duration-300 ease-in-out focus:border-blue-500 focus:ring-2 focus:ring-blue-300 hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed">
+            <SelectValue placeholder="Select tone" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="professional">Professional</SelectItem>
+            <SelectItem value="casual">Casual</SelectItem>
+            <SelectItem value="funny">Funny</SelectItem>
+            <SelectItem value="controversial">Controversial</SelectItem>
+            <SelectItem value="inspirational">Inspirational</SelectItem>
+            <SelectItem value="educational">Educational</SelectItem>
+          </SelectContent>
+        </Select>
 
         <Button type="submit" disabled={loading || credits <= 0} className="px-8 h-12 rounded-2xl cursor-pointer">
           {loading ? "Generating..." : "Generate"}
