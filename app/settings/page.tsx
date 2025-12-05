@@ -1,6 +1,6 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession, signOut, signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, FormEvent } from "react";
 import Link from "next/link";
@@ -26,6 +26,9 @@ import {
   Lock,
   CheckCircle,
   AlertCircle,
+  Twitter,
+  Link as LinkIcon,
+  X,
 } from "lucide-react";
 
 interface UserData {
@@ -41,7 +44,6 @@ declare global {
   }
 }
 
-// A simple toast-like notification component
 function Notification({
   message,
   type,
@@ -89,21 +91,18 @@ export default function SettingsPage() {
   const { data: session, status, update } = useSession();
   const [userData, setUserData] = useState<UserData | null>(null);
   const [isLoadingUserData, setIsLoadingUserData] = useState(true);
+  const [twitterConnected, setTwitterConnected] = useState(false);
 
-  // Profile form
   const [name, setName] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
 
-  // Password form
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordLoading, setPasswordLoading] = useState(false);
 
-  // Payment State
   const [paymentLoading, setPaymentLoading] = useState(false);
 
-  // Notification state
   const [notification, setNotification] = useState<{
     message: string;
     type: "success" | "error";
@@ -123,7 +122,6 @@ export default function SettingsPage() {
     try {
       setIsLoadingUserData(true);
       
-      // Start timing and fetch data
       const startTime = Date.now();
       
       const response = await fetch("/api/settings");
@@ -131,17 +129,15 @@ export default function SettingsPage() {
 
       const data = await response.json();
       
-      // Calculate remaining time to reach minimum 1500ms
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, 300 - elapsedTime);
       
-      // Wait for the remaining time to ensure minimum loading duration
       await new Promise((resolve) => setTimeout(resolve, remainingTime));
       
       setUserData(data.user);
       setName(data.user.name || "");
+      setTwitterConnected(data.connectedAccounts?.twitter || false);
       
-      // Update session with latest credits
       await update();
     } catch (err) {
       showNotification("Failed to load user data", "error");
@@ -173,7 +169,6 @@ export default function SettingsPage() {
       showNotification("Profile updated successfully!", "success");
       setUserData(data.user);
       
-      // Trigger session update to reflect new name
       await update();
     } catch (err: any) {
       showNotification(err.message, "error");
@@ -206,7 +201,6 @@ export default function SettingsPage() {
         throw new Error(data.message || "Failed to change password");
 
       showNotification("Password changed successfully!", "success");
-      // Clear password fields
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -220,7 +214,6 @@ export default function SettingsPage() {
   const handleBuyCredits = async () => {
     setPaymentLoading(true);
     try {
-      // 1. Create Order
       const orderResponse = await fetch("/api/payment/order", {
         method: "POST",
       });
@@ -230,7 +223,6 @@ export default function SettingsPage() {
         throw new Error(orderData.message || "Failed to create order");
       }
 
-      // 2. Initialize Razorpay
       const options = {
         key: orderData.keyId,
         amount: orderData.amount,
@@ -239,7 +231,6 @@ export default function SettingsPage() {
         description: "Purchase 10 Credits",
         order_id: orderData.orderId,
         handler: async function (response: any) {
-          // 3. Verify Payment
           try {
             const verifyResponse = await fetch("/api/payment/verify", {
               method: "POST",
@@ -255,7 +246,7 @@ export default function SettingsPage() {
 
             if (verifyResponse.ok) {
               showNotification("Credits added successfully!", "success");
-              fetchUserData(); // Refresh data to show new credits
+              fetchUserData();
             } else {
               showNotification("Payment verification failed", "error");
             }
@@ -268,7 +259,7 @@ export default function SettingsPage() {
           email: userData?.email,
         },
         theme: {
-          color: "#059669", // Emerald-600
+          color: "#059669",
         },
       };
 
@@ -285,6 +276,10 @@ export default function SettingsPage() {
     } finally {
       setPaymentLoading(false);
     }
+  };
+
+  const handleConnectTwitter = async () => {
+    await signIn('twitter', { callbackUrl: '/settings' });
   };
 
   if (status === "loading" || isLoadingUserData || !userData) {
@@ -480,7 +475,58 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Card 2: Change Password */}
+            {/* Card 2: Connected Accounts */}
+            <Card className="border border-gray-200 dark:border-gray-800">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LinkIcon className="h-5 w-5 text-emerald-600" />
+                  Connected Accounts
+                </CardTitle>
+                <CardDescription>
+                  Link your social media accounts to post directly from the app.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-sky-100 dark:bg-sky-950/30 flex items-center justify-center">
+                        <Twitter className="h-5 w-5 text-sky-500" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white">
+                          X (Twitter)
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">
+                          {twitterConnected
+                            ? "Connected"
+                            : "Post tweets directly from the app"}
+                        </p>
+                      </div>
+                    </div>
+                    {twitterConnected ? (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5 text-emerald-600" />
+                        <span className="text-sm text-emerald-600 font-medium">
+                          Connected
+                        </span>
+                      </div>
+                    ) : (
+                      <Button
+                        onClick={handleConnectTwitter}
+                        variant="outline"
+                        size="sm"
+                        className="border-sky-500 text-sky-500 hover:bg-sky-50 dark:hover:bg-sky-950/30"
+                      >
+                        Connect
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Card 3: Change Password */}
             <Card className="border border-gray-200 dark:border-gray-800">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -556,7 +602,7 @@ export default function SettingsPage() {
               </CardContent>
             </Card>
 
-            {/* Card 3: Credit Balance */}
+            {/* Card 4: Credit Balance */}
             <Card className="border border-gray-200 dark:border-gray-800">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
