@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server"
-import { getServerSession } from "next-auth"
+import { auth } from "@/auth"
 import { prisma } from "@/lib/prisma"
 import { extractYoutubeTranscript } from "@/lib/youtube-utils"
 import { scrapeBlogContent } from "@/lib/scrape-utils"
@@ -7,7 +7,7 @@ import { generateContent } from "@/lib/ai-utils"
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getServerSession()
+    const session = await auth()
 
     if (!session?.user?.email) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
