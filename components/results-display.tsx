@@ -9,7 +9,7 @@ import PostPreview from "./post-preview"
 
 interface ResultsDisplayProps {
   results: {
-    tweets?: string[]
+    twitter?: string[]  // Changed from tweets to twitter
     linkedin?: string
     instagram?: string
     facebook?: string
@@ -31,8 +31,9 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
     setEditingKey(null) 
     // Initialize all to preview mode
     const modes: {[key: string]: "edit" | "preview"} = {}
-    if (results.tweets) {
-      results.tweets.forEach((_, idx) => {
+    // Changed from results.tweets to results.twitter
+    if (results.twitter) {
+      results.twitter.forEach((_, idx) => {
         modes[`tweet-${idx}`] = "preview"
       })
     }
@@ -105,9 +106,9 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
         </div>
       )}
       
-      <div className="space-y-6">
-        {/* Tweets / X */}
-        {editedResults.tweets && Array.isArray(editedResults.tweets) && editedResults.tweets.length > 0 && (
+      <div className="space-y-6 ">
+        {/* Tweets / X - Changed from editedResults.tweets to editedResults.twitter */}
+        {editedResults.twitter && Array.isArray(editedResults.twitter) && editedResults.twitter.length > 0 && (
           <Card>
             <CardHeader>
               <div className="flex items-center gap-2">
@@ -117,23 +118,32 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
               <CardDescription>Engaging tweets with hashtags</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {editedResults.tweets.map((tweet, idx) => {
+              {editedResults.twitter.map((tweet, idx) => {
                 const editKey = `tweet-${idx}`
                 const mode = viewMode[editKey] || "preview"
+                
+                // Normalize tweet to string if it's an object
+                const tweetText = typeof tweet === 'string' 
+                  ? tweet 
+                  : typeof tweet === 'object' && tweet !== null
+                    ? (tweet as any).tweet || JSON.stringify(tweet)
+                    : String(tweet);
+                
                 return (
                   <div key={idx} className="space-y-3">
                     {mode === "preview" ? (
                       <PostPreview
-                        content={tweet}
+                        content={tweetText}
                         platform="twitter"
                         authorName={session?.user?.name || "User"}
-                        authorHandle={session?.user?.email?.split("@")[0]}
+                        authorHandle={session?.user?.email?.split("@")[0] || "user"}
+                        authorImage={session?.user?.image || undefined}
                       />
                     ) : (
                       <div className="bg-muted p-4 rounded-lg">
                         <textarea
-                          value={tweet}
-                          onChange={(e) => handleTextChange('tweets', e.target.value, idx)}
+                          value={tweetText}
+                          onChange={(e) => handleTextChange('twitter', e.target.value, idx)}
                           className="w-full min-h-[100px] rounded-md border p-2 bg-background text-sm"
                         />
                       </div>
@@ -159,7 +169,7 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
                       <Button 
                         variant="outline" 
                         size="sm" 
-                        onClick={() => copyToClipboard(tweet, editKey)}
+                        onClick={() => copyToClipboard(tweetText, editKey)}
                       >
                         {copied === editKey ? "Copied!" : "Copy"}
                       </Button>
@@ -167,7 +177,7 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
                         variant="default" 
                         size="sm"
                         className="bg-sky-500 hover:bg-sky-600"
-                        onClick={() => handlePostToTwitter(tweet, editKey)}
+                        onClick={() => handlePostToTwitter(tweetText, editKey)}
                         disabled={posting === editKey}
                       >
                         {posting === editKey ? (
@@ -203,6 +213,7 @@ export default function ResultsDisplay({ results }: ResultsDisplayProps) {
                   content={editedResults.linkedin}
                   platform="linkedin"
                   authorName={session?.user?.name || "User"}
+                  authorImage={session?.user?.image || undefined}
                 />
               ) : (
                 <div className="bg-muted p-4 rounded-lg">
