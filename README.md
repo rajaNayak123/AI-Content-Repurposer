@@ -18,14 +18,10 @@
   <a href="#-key-features">Features</a> •
   <a href="#-getting-started">Getting Started</a> •
   <a href="#-documentation">Documentation</a> •
-  <a href="#-contributing">Contributing</a>
+  <a href="#-contributing">Contributing</a> 
 </p>
 
-<img src="https://via.placeholder.com/800x400/0f172a/38bdf8?text=AI+Content+Repurposer+Dashboard" alt="Dashboard Preview"/>
-
 </div>
-
----
 
 ## 🎬 Demo
 
@@ -40,11 +36,9 @@
 | 🎨 **Tone Customization** | Professional, Casual, Funny, Controversial & more |
 | ⚡ **Instant Generation** | Results in under 30 seconds |
 
-[🔴 Watch Live Demo](https://your-demo-link.com) | [🚀 Try It Now](https://your-app-link.com)
+[🔴 Watch Live Demo](https://your-demo-link.com) | [🚀 Deploy Link](https://ai-content-repurposer-gvpejn9id-raja-nayaks-projects.vercel.app/)
 
 </div>
-
----
 
 ## ✨ Why AI Content Repurposer?
 
@@ -73,33 +67,17 @@
 </tr>
 </table>
 
----
 
 ## 🚀 Key Features
 
-<div align="center">
-
-### Transform Content Across Multiple Platforms
-
-</div>
-```mermaid
-  graph LR
-      A[📹 YouTube Video] --> B{AI Content<br/>Repurposer}
-      C[📝 Blog Post] --> B
-      B --> D[🧵 Twitter Thread]
-      B --> E[💼 LinkedIn Post]
-      B --> F[📸 Instagram Caption]
-      B --> G[📘 Facebook Post]
-      B --> H[📧 Email Newsletter]
-    ```
-    style B fill:#38bdf8,stroke:#0284c7,stroke-width:3px,color:#fff
-    style A fill:#ff0000,stroke:#cc0000,stroke-width:2px,color:#fff
-    style C fill:#f97316,stroke:#ea580c,stroke-width:2px,color:#fff
-    style D fill:#1da1f2,stroke:#0c8bd9,stroke-width:2px,color:#fff
-    style E fill:#0077b5,stroke:#005885,stroke-width:2px,color:#fff
-    style F fill:#e4405f,stroke:#c13584,stroke-width:2px,color:#fff
-    style G fill:#1877f2,stroke:#0d65d9,stroke-width:2px,color:#fff
-    style H fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
+| Feature | Description |
+| :--- | :--- |
+| **🤖 AI Generation** | Powered by Google Gemini 2.0 Flash for high-quality, context-aware content. |
+| **📺 Multi-Source** | Extracts text from **YouTube Transcripts** and **Web Articles**. |
+| **🎨 Tone Selection** | Customize output with tones like *Professional, Funny, Controversial, or Educational*. |
+| **💳 Credit System** | Integrated **Razorpay** payment gateway for purchasing generation credits. |
+| **🐦 X Integration** | Post threads directly to Twitter/X from the dashboard. |
+| **🔐 Secure Auth** | User authentication via **NextAuth.js v5** (Credentials & Social Providers). |
 
 
 ### 🎯 Core Capabilities
@@ -133,7 +111,6 @@ Choose from **6 different tones** to match your brand voice
 </tr>
 </table>
 
----
 
 <details>
 <summary>🧵 <b>Twitter/X Generation</b> - Click to expand</summary>
@@ -1253,7 +1230,7 @@ git push origin feature/AmazingFeature
 
 ---
 
-**Made with ❤️ and ☕ by Raja Nayak(https://github.com/yourusername)**
+**Made with ❤️ and ☕ by Raja Nayak [Portfolio](https://raja-dev.vercel.app/)**
 
 <sub>If you found this project useful, consider buying me a coffee! ☕</sub>
 
