@@ -36,7 +36,7 @@
 | 🎨 **Tone Customization** | Professional, Casual, Funny, Controversial & more |
 | ⚡ **Instant Generation** | Results in under 30 seconds |
 
-[🔴 Watch Live Demo](https://your-demo-link.com) | [🚀 Deploy Link](https://ai-content-repurposer-gvpejn9id-raja-nayaks-projects.vercel.app/)
+[🔴 Watch Live Demo](https://ai-content-repurposer-ten.vercel.app/) | [🚀 Deploy Link](https://ai-content-repurposer-ten.vercel.app/)
 
 </div>
 
