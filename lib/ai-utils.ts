@@ -51,7 +51,7 @@ export async function generateContent(
 
     // Build platform-specific instructions dynamically
     const platformInstructions: Record<string, string> = {
-      twitter: `"tweets": (For X/Twitter)
+      twitter: `"twitter": (For X/Twitter)
 Must be an array containing exactly 5 unique tweets.
 Each tweet must be under 280 characters.
 The tone should be ${toneDescription}.
@@ -137,32 +137,38 @@ Only include the platforms requested: ${platformKeys}
     const data = JSON.parse(jsonMatch[0]);
 
     // Validation - only validate fields that were requested
+    // Fixed: Check for 'twitter' key (not 'tweets')
     if (platforms.includes('twitter')) {
-      if (!Array.isArray(data.tweets) || data.tweets.length < 1) {
-        throw new Error("Tweets invalid");
+      if (!Array.isArray(data.twitter) || data.twitter.length < 1) {
+        console.error("Twitter data invalid:", data.twitter);
+        throw new Error("Twitter content generation failed - expected array of tweets");
       }
     }
 
     if (platforms.includes('linkedin')) {
-      if (typeof data.linkedin !== "string") {
-        throw new Error("LinkedIn invalid");
+      if (typeof data.linkedin !== "string" || data.linkedin.length < 10) {
+        console.error("LinkedIn data invalid:", data.linkedin);
+        throw new Error("LinkedIn content generation failed");
       }
     }
 
     if (platforms.includes('email')) {
-      if (typeof data.email !== "string") {
-        throw new Error("Email invalid");
+      if (typeof data.email !== "string" || data.email.length < 10) {
+        console.error("Email data invalid:", data.email);
+        throw new Error("Email content generation failed");
       }
     }
 
     if (platforms.includes('instagram')) {
-      if (typeof data.instagram !== "string") {
+      if (typeof data.instagram !== "string" || data.instagram.length < 10) {
+        console.error("Instagram data invalid, using fallback");
         data.instagram = "Instagram caption generation failed.";
       }
     }
 
     if (platforms.includes('facebook')) {
-      if (typeof data.facebook !== "string") {
+      if (typeof data.facebook !== "string" || data.facebook.length < 10) {
+        console.error("Facebook data invalid, using fallback");
         data.facebook = "Facebook post generation failed.";
       }
     }

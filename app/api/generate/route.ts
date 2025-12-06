@@ -128,10 +128,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Create Generation record with nullable fields
+    // Fixed: Use aiResult.twitter (not aiResult.tweets)
     const generation = await prisma.generation.create({
       data: {
         sourceUrl: url,
-        resultTweets: aiResult.tweets || null,
+        resultTweets: aiResult.twitter || null,  // Changed from aiResult.tweets
         resultLinkedin: aiResult.linkedin || null,
         resultInstagram: aiResult.instagram || null, 
         resultFacebook: aiResult.facebook || null,   
