@@ -79,6 +79,26 @@ export default function HistoryPage() {
     }
   }
 
+  // Helper function to normalize tweet to string
+  const normalizeTweet = (tweet: any): string => {
+    if (typeof tweet === 'string') {
+      return tweet;
+    }
+    if (typeof tweet === 'object' && tweet !== null) {
+      // Handle {text: "...", hashtags: "..."} format
+      if (tweet.text) {
+        return tweet.hashtags ? `${tweet.text} ${tweet.hashtags}` : tweet.text;
+      }
+      // Handle {tweet: "..."} format
+      if (tweet.tweet) {
+        return tweet.tweet;
+      }
+      // Fallback: stringify the object
+      return JSON.stringify(tweet);
+    }
+    return String(tweet);
+  };
+
   const handleCopy = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
     setCopiedId(id)
@@ -245,155 +265,162 @@ export default function HistoryPage() {
             </Card>
           )}
 
-          {filteredGenerations.map((item) => (
-            <Card key={item.id} className="border-2 border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all">
-              <CardHeader className="bg-gray-50 dark:bg-gray-800/50 flex flex-row justify-between items-start">
-                 <div className="flex-1 min-w-0">
-                    <CardTitle className="text-base font-medium truncate text-gray-900 dark:text-white">
-                      {item.sourceUrl}
-                    </CardTitle>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      {new Date(item.createdAt).toLocaleString()}
-                    </p>
-                 </div>
-                 <Button 
-                   variant="ghost" 
-                   size="sm" 
-                   onClick={() => handleDelete(item.id)} 
-                   className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
-                 >
-                   <Trash2 className="h-4 w-4"/>
-                 </Button>
-              </CardHeader>
+          {filteredGenerations.map((item) => {
+            // Normalize tweets array to strings
+            const normalizedTweets = item.resultTweets && Array.isArray(item.resultTweets)
+              ? item.resultTweets.map(tweet => normalizeTweet(tweet))
+              : [];
 
-              <CardContent className="pt-6 space-y-6">
-                
-                {/* X / Tweets */}
-                {item.resultTweets && Array.isArray(item.resultTweets) && item.resultTweets.length > 0 && (
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
-                      <Twitter className="h-4 w-4 text-sky-500"/> X (Twitter)
-                    </h4>
-                    <div className="space-y-2">
-                        {item.resultTweets.map((tweet, idx) => (
-                           <div key={idx} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm relative group">
-                                <p className="pr-8 text-gray-700 dark:text-gray-300">{tweet}</p>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm" 
-                                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
-                                  onClick={() => handleCopy(tweet, `t-${item.id}-${idx}`)}
-                                >
-                                  {copiedId === `t-${item.id}-${idx}` ? (
-                                    <span className="text-xs text-emerald-600">✓</span>
-                                  ) : (
-                                    <Copy className="h-3 w-3"/>
-                                  )}
-                                </Button>
-                           </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
+            return (
+              <Card key={item.id} className="border-2 border-gray-200 dark:border-gray-800 hover:shadow-lg transition-all">
+                <CardHeader className="bg-gray-50 dark:bg-gray-800/50 flex flex-row justify-between items-start">
+                   <div className="flex-1 min-w-0">
+                      <CardTitle className="text-base font-medium truncate text-gray-900 dark:text-white">
+                        {item.sourceUrl}
+                      </CardTitle>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                        {new Date(item.createdAt).toLocaleString()}
+                      </p>
+                   </div>
+                   <Button 
+                     variant="ghost" 
+                     size="sm" 
+                     onClick={() => handleDelete(item.id)} 
+                     className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/30"
+                   >
+                     <Trash2 className="h-4 w-4"/>
+                   </Button>
+                </CardHeader>
 
-                {/* LinkedIn */}
-                {item.resultLinkedin && (
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
-                      <Linkedin className="h-4 w-4 text-blue-600"/> LinkedIn
-                    </h4>
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm whitespace-pre-wrap relative group">
-                        <p className="pr-8 text-gray-700 dark:text-gray-300">{item.resultLinkedin}</p>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
-                          onClick={() => handleCopy(item.resultLinkedin!, `l-${item.id}`)}
-                        >
-                          {copiedId === `l-${item.id}` ? (
-                            <span className="text-xs text-emerald-600">✓</span>
-                          ) : (
-                            <Copy className="h-3 w-3"/>
-                          )}
-                        </Button>
+                <CardContent className="pt-6 space-y-6">
+                  
+                  {/* X / Tweets */}
+                  {normalizedTweets.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
+                        <Twitter className="h-4 w-4 text-sky-500"/> X (Twitter)
+                      </h4>
+                      <div className="space-y-2">
+                          {normalizedTweets.map((tweet, idx) => (
+                             <div key={idx} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm relative group">
+                                  <p className="pr-8 text-gray-700 dark:text-gray-300">{tweet}</p>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm" 
+                                    className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
+                                    onClick={() => handleCopy(tweet, `t-${item.id}-${idx}`)}
+                                  >
+                                    {copiedId === `t-${item.id}-${idx}` ? (
+                                      <span className="text-xs text-emerald-600">✓</span>
+                                    ) : (
+                                      <Copy className="h-3 w-3"/>
+                                    )}
+                                  </Button>
+                             </div>
+                          ))}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Instagram */}
-                {item.resultInstagram && (
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
-                      <Instagram className="h-4 w-4 text-pink-600"/> Instagram
-                    </h4>
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm whitespace-pre-wrap relative group">
-                        <p className="pr-8 text-gray-700 dark:text-gray-300">{item.resultInstagram}</p>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
-                          onClick={() => handleCopy(item.resultInstagram!, `i-${item.id}`)}
-                        >
-                          {copiedId === `i-${item.id}` ? (
-                            <span className="text-xs text-emerald-600">✓</span>
-                          ) : (
-                            <Copy className="h-3 w-3"/>
-                          )}
-                        </Button>
+                  {/* LinkedIn */}
+                  {item.resultLinkedin && (
+                    <div>
+                      <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
+                        <Linkedin className="h-4 w-4 text-blue-600"/> LinkedIn
+                      </h4>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm whitespace-pre-wrap relative group">
+                          <p className="pr-8 text-gray-700 dark:text-gray-300">{item.resultLinkedin}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
+                            onClick={() => handleCopy(item.resultLinkedin!, `l-${item.id}`)}
+                          >
+                            {copiedId === `l-${item.id}` ? (
+                              <span className="text-xs text-emerald-600">✓</span>
+                            ) : (
+                              <Copy className="h-3 w-3"/>
+                            )}
+                          </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Facebook */}
-                {item.resultFacebook && (
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
-                      <Facebook className="h-4 w-4 text-blue-500"/> Facebook
-                    </h4>
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm whitespace-pre-wrap relative group">
-                        <p className="pr-8 text-gray-700 dark:text-gray-300">{item.resultFacebook}</p>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
-                          onClick={() => handleCopy(item.resultFacebook!, `f-${item.id}`)}
-                        >
-                          {copiedId === `f-${item.id}` ? (
-                            <span className="text-xs text-emerald-600">✓</span>
-                          ) : (
-                            <Copy className="h-3 w-3"/>
-                          )}
-                        </Button>
+                  {/* Instagram */}
+                  {item.resultInstagram && (
+                    <div>
+                      <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
+                        <Instagram className="h-4 w-4 text-pink-600"/> Instagram
+                      </h4>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm whitespace-pre-wrap relative group">
+                          <p className="pr-8 text-gray-700 dark:text-gray-300">{item.resultInstagram}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
+                            onClick={() => handleCopy(item.resultInstagram!, `i-${item.id}`)}
+                          >
+                            {copiedId === `i-${item.id}` ? (
+                              <span className="text-xs text-emerald-600">✓</span>
+                            ) : (
+                              <Copy className="h-3 w-3"/>
+                            )}
+                          </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Email */}
-                {item.resultEmail && (
-                  <div>
-                    <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
-                      <Mail className="h-4 w-4 text-purple-600"/> Email
-                    </h4>
-                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm whitespace-pre-wrap relative group">
-                        <p className="pr-8 text-gray-700 dark:text-gray-300">{item.resultEmail}</p>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
-                          onClick={() => handleCopy(item.resultEmail!, `e-${item.id}`)}
-                        >
-                          {copiedId === `e-${item.id}` ? (
-                            <span className="text-xs text-emerald-600">✓</span>
-                          ) : (
-                            <Copy className="h-3 w-3"/>
-                          )}
-                        </Button>
+                  {/* Facebook */}
+                  {item.resultFacebook && (
+                    <div>
+                      <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
+                        <Facebook className="h-4 w-4 text-blue-500"/> Facebook
+                      </h4>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm whitespace-pre-wrap relative group">
+                          <p className="pr-8 text-gray-700 dark:text-gray-300">{item.resultFacebook}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
+                            onClick={() => handleCopy(item.resultFacebook!, `f-${item.id}`)}
+                          >
+                            {copiedId === `f-${item.id}` ? (
+                              <span className="text-xs text-emerald-600">✓</span>
+                            ) : (
+                              <Copy className="h-3 w-3"/>
+                            )}
+                          </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                  )}
+
+                  {/* Email */}
+                  {item.resultEmail && (
+                    <div>
+                      <h4 className="font-semibold flex items-center gap-2 mb-3 text-gray-900 dark:text-white">
+                        <Mail className="h-4 w-4 text-purple-600"/> Email
+                      </h4>
+                      <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-sm whitespace-pre-wrap relative group">
+                          <p className="pr-8 text-gray-700 dark:text-gray-300">{item.resultEmail}</p>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity h-7 w-7 p-0" 
+                            onClick={() => handleCopy(item.resultEmail!, `e-${item.id}`)}
+                          >
+                            {copiedId === `e-${item.id}` ? (
+                              <span className="text-xs text-emerald-600">✓</span>
+                            ) : (
+                              <Copy className="h-3 w-3"/>
+                            )}
+                          </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
         </main>
       </div>
     </div>
