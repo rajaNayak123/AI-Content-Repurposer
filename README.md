@@ -5,6 +5,10 @@
 ### Turn One Piece of Content Into Ten
 
 <p align="center">
+  <strong>The ultimate AI-powered solution to transform a single YouTube video or blog post into optimized content for 5+ social media platforms in under 30 seconds.</strong>
+</p>
+
+<p align="center">
   <img src="https://img.shields.io/badge/Next.js-15/16-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js"/>
   <img src="https://img.shields.io/badge/TypeScript-5.0-blue?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript"/>
   <img src="https://img.shields.io/badge/Tailwind-3.0-38bdf8?style=for-the-badge&logo=tailwind-css&logoColor=white" alt="Tailwind"/>
@@ -21,11 +25,7 @@
   <a href="#-contributing">Contributing</a>
 </p>
 
-<img src="https://via.placeholder.com/800x400/0f172a/38bdf8?text=AI+Content+Repurposer+Dashboard" alt="Dashboard Preview"/>
-
 </div>
-
----
 
 ## 🎬 Demo
 
@@ -40,11 +40,11 @@
 | 🎨 **Tone Customization** | Professional, Casual, Funny, Controversial & more |
 | ⚡ **Instant Generation** | Results in under 30 seconds |
 
-[🔴 Watch Live Demo](https://your-demo-link.com) | [🚀 Try It Now](https://your-app-link.com)
+[🔴 Watch Live Demo](ai-content-repurposer-ten.vercel.app) | [🚀 Try It Now](ai-content-repurposer-ten.vercel.app)
 
 </div>
 
----
+<br/>
 
 ## ✨ Why AI Content Repurposer?
 
@@ -73,7 +73,7 @@
 </tr>
 </table>
 
----
+<br/>
 
 ## 🚀 Key Features
 
@@ -82,24 +82,6 @@
 ### Transform Content Across Multiple Platforms
 
 </div>
-
-graph LR
-    A[📹 YouTube Video] --> B{AI Content<br/>Repurposer}
-    C[📝 Blog Post] --> B
-    B --> D[🧵 Twitter Thread]
-    B --> E[💼 LinkedIn Post]
-    B --> F[📸 Instagram Caption]
-    B --> G[📘 Facebook Post]
-    B --> H[📧 Email Newsletter]
-    
-    style B fill:#38bdf8,stroke:#0284c7,stroke-width:3px,color:#fff
-    style A fill:#ff0000,stroke:#cc0000,stroke-width:2px,color:#fff
-    style C fill:#f97316,stroke:#ea580c,stroke-width:2px,color:#fff
-    style D fill:#1da1f2,stroke:#0c8bd9,stroke-width:2px,color:#fff
-    style E fill:#0077b5,stroke:#005885,stroke-width:2px,color:#fff
-    style F fill:#e4405f,stroke:#c13584,stroke-width:2px,color:#fff
-    style G fill:#1877f2,stroke:#0d65d9,stroke-width:2px,color:#fff
-    style H fill:#10b981,stroke:#059669,stroke-width:2px,color:#fff
 
 
 ### 🎯 Core Capabilities
@@ -517,7 +499,7 @@ npm run dev
 <summary><b>📄 Complete .env Configuration</b></summary>
 
 <br/>
-```env
+
 # ============================================
 # DATABASE CONFIGURATION
 # ============================================
@@ -545,7 +527,7 @@ RAZORPAY_KEY_SECRET="your-razorpay-secret-key"
 # ============================================
 TWITTER_CLIENT_ID="your-twitter-client-id"
 TWITTER_CLIENT_SECRET="your-twitter-client-secret"
-```
+
 
 </details>
 
@@ -676,7 +658,7 @@ Get results in **30 seconds** or less
 <br/>
 
 #### 📹 For YouTube Videos:
-```
+
 1. Copy any YouTube video URL
    Example: https://youtube.com/watch?v=dQw4w9WgXcQ
 
@@ -686,10 +668,10 @@ Get results in **30 seconds** or less
    ✓ Extract video transcript
    ✓ Analyze content themes
    ✓ Identify key talking points
-```
+
 
 #### 📝 For Blog Posts:
-```
+
 1. Copy any public blog/article URL
    Example: https://medium.com/@user/article-title
 
@@ -699,7 +681,7 @@ Get results in **30 seconds** or less
    ✓ Scrape article content
    ✓ Parse main sections
    ✓ Extract core message
-```
+=
 
 #### 🎨 Customize Your Output:
 
@@ -732,7 +714,7 @@ Click the **"Generate Content"** button and wait 20-30 seconds.
 ### 📊 Results Panel
 
 After generation, you'll see:
-```
+
 ┌─────────────────────────────────────────┐
 │  🧵 TWITTER / X                         │
 │  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  │
@@ -750,10 +732,8 @@ After generation, you'll see:
 │  [📋 Copy] [✏️ Edit]                   │
 └─────────────────────────────────────────┘
 
-... (and more platforms)
-```
-
 ### 🛠️ Actions You Can Take:
+
 
 | Action | Description |
 |--------|-------------|
@@ -1180,154 +1160,6 @@ git push origin feature/AmazingFeature
 
 ---
 
-### 📝 Contribution Guidelines
-
-<details>
-<summary><b>Code Style</b></summary>
-
-- ✅ Use TypeScript for all new code
-- ✅ Follow existing code structure and patterns
-- ✅ Use meaningful variable and function names
-- ✅ Add comments for complex logic
-- ✅ Keep functions small and focused
-- ✅ Use async/await over promises when possible
-
-</details>
-
-<details>
-<summary><b>Commit Messages</b></summary>
-
-Follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
-
-</div>
-
----
-
-## 🙏 Acknowledgments
-
-<div align="center">
-
-### Built With Love Using
-
-</div>
-
-<table>
-<tr>
-<td align="center">
-<img src="https://cdn.worldvectorlogo.com/logos/next-js.svg" width="60" height="60" alt="Next.js" /><br/>
-<b>Next.js</b><br/>
-<sub>The React Framework</sub>
-</td>
-<td align="center">
-<img src="https://www.gstatic.com/lamda/images/gemini_sparkle_v002_d4735304ff6292a690345.svg" width="60" height="60" alt="Gemini" /><br/>
-<b>Google Gemini</b><br/>
-<sub>AI Power</sub>
-</td>
-<td align="center">
-<img src="https://cdn.worldvectorlogo.com/logos/tailwindcss.svg" width="60" height="60" alt="Tailwind" /><br/>
-<b>Tailwind CSS</b><br/>
-<sub>Beautiful Styling</sub>
-</td>
-<td align="center">
-<img src="https://cdn.worldvectorlogo.com/logos/mongodb-icon-1.svg" width="60" height="60" alt="MongoDB" /><br/>
-<b>MongoDB</b><br/>
-<sub>Reliable Database</sub>
-</td>
-<td align="center">
-<img src="https://razorpay.com/assets/razorpay-glyph.svg" width="60" height="60" alt="Razorpay" /><br/>
-<b>Razorpay</b><br/>
-<sub>Seamless Payments</sub>
-</td>
-</tr>
-</table>
-
-### 💖 Special Thanks
-
-- **Vercel** - For amazing deployment platform
-- **Anthropic** - For Claude AI assistance
-- **Open Source Community** - For incredible tools and libraries
-- **Early Beta Testers** - For valuable feedback
-- **You** - For checking out this project! ⭐
-
----
-
-## 📞 Support & Community
-
-<div align="center">
-
-### Need Help? We're Here!
-
-<table>
-<tr>
-<td align="center" width="25%">
-
-### 📧 Email
-[support@yourapp.com](mailto:support@yourapp.com)
-
-<sub>Response within 24h</sub>
-
-</td>
-<td align="center" width="25%">
-
-### 💬 Discord
-[Join Our Server](https://discord.gg/yourserver)
-
-<sub>Live community chat</sub>
-
-</td>
-<td align="center" width="25%">
-
-### 🐦 Twitter
-[@yourapp](https://twitter.com/yourapp)
-
-<sub>Latest updates</sub>
-
-</td>
-<td align="center" width="25%">
-
-### 📚 Docs
-[docs.yourapp.com](https://docs.yourapp.com)
-
-<sub>Full documentation</sub>
-
-</td>
-</tr>
-</table>
-
----
-
-### 🌐 Important Links
-
-[![Website](https://img.shields.io/badge/Website-yourapp.com-38bdf8?style=for-the-badge&logo=google-chrome&logoColor=white)](https://yourapp.com)
-[![Documentation](https://img.shields.io/badge/Docs-docs.yourapp.com-10b981?style=for-the-badge&logo=read-the-docs&logoColor=white)](https://docs.yourapp.com)
-[![Blog](https://img.shields.io/badge/Blog-blog.yourapp.com-f59e0b?style=for-the-badge&logo=hashnode&logoColor=white)](https://blog.yourapp.com)
-[![Status](https://img.shields.io/badge/Status-status.yourapp.com-8b5cf6?style=for-the-badge&logo=statuspage&logoColor=white)](https://status.yourapp.com)
-
-</div>
-
----
-
-## ⭐ Show Your Support
-
-<div align="center">
-
-If this project helped you, please consider giving it a ⭐!
-
-It helps others discover the project and motivates us to keep improving it.
-
-[![GitHub Stars](https://img.shields.io/github/stars/yourusername/ai-content-repurposer?style=social)](https://github.com/yourusername/ai-content-repurposer/stargazers)
-
-### Share With Friends
-
-[![Twitter](https://img.shields.io/badge/Share_on-Twitter-1DA1F2?style=for-the-badge&logo=twitter&logoColor=white)](https://twitter.com/intent/tweet?text=Check%20out%20this%20amazing%20AI%20Content%20Repurposer!&url=https://github.com/yourusername/ai-content-repurposer)
-[![LinkedIn](https://img.shields.io/badge/Share_on-LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/sharing/share-offsite/?url=https://github.com/yourusername/ai-content-repurposer)
-[![Facebook](https://img.shields.io/badge/Share_on-Facebook-1877F2?style=for-the-badge&logo=facebook&logoColor=white)](https://www.facebook.com/sharer/sharer.php?u=https://github.com/yourusername/ai-content-repurposer)
-[![Reddit](https://img.shields.io/badge/Share_on-Reddit-FF4500?style=for-the-badge&logo=reddit&logoColor=white)](https://reddit.com/submit?url=https://github.com/yourusername/ai-content-repurposer&title=AI%20Content%20Repurposer)
-
-</div>
-
----
-
 <div align="center">
 
 ### 📜 Version History
@@ -1335,19 +1167,16 @@ It helps others discover the project and motivates us to keep improving it.
 | Version | Date | Changes |
 |---------|------|---------|
 | 🎉 v1.0.0 | Dec 2025 | Initial release |
-| 🚀 v1.1.0 | Coming Soon | TikTok & Pinterest support |
+| 🚀 v1.1.0 | Coming Soon | Image Generate support |
 
 ---
 
-**Made with ❤️ and ☕ by [Your Name](https://github.com/yourusername)**
+**Made with ❤️ and ☕ by **Raja Nayak** [Portfolio](https://raja-dev.vercel.app/)**
 
 <sub>If you found this project useful, consider buying me a coffee! ☕</sub>
 
 [![Buy Me A Coffee](https://img.shields.io/badge/Buy_Me_A_Coffee-Support_Project-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/yourusername)
 
----
-
-© 2025 AI Content Repurposer. All rights reserved.
 
 </div>
 
