@@ -1,41 +1,32 @@
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 
-function extractText(result: any): string {
-  if (!result?.candidates?.length) return "";
+let groqClient: Groq | null = null;
 
-  const candidate = result.candidates[0];
+const getGroqClient = (): Groq => {
+  if (!groqClient) {
+    const apiKey = process.env.GROQ_API_KEY;
 
-  if (candidate.content?.parts?.length) {
-    for (const part of candidate.content.parts) {
-      if (typeof part?.text === "string") {
-        return part.text.trim();
-      }
+    console.log('🔑 Groq API Key Status:', apiKey ? '✅ Loaded' : '❌ Missing');
+
+    if (!apiKey) {
+      console.error('❌ GROQ_API_KEY is not set in environment variables!');
+      throw new Error('GROQ_API_KEY environment variable is required');
     }
+
+    groqClient = new Groq({ apiKey });
+    console.log('✅ Groq client initialized successfully');
   }
 
-  const legacyParts = Array.isArray(candidate.content)
-    ? candidate.content
-    : [candidate.content];
-
-  for (const part of legacyParts) {
-    if (typeof part?.text === "string") {
-      return part.text.trim();
-    }
-  }
-
-  return "";
-}
+  return groqClient;
+};
 
 export async function generateContent(
-  sourceText: string, 
+  sourceText: string,
   tone: string = "professional",
   platforms: string[] = ['twitter', 'linkedin', 'instagram', 'facebook', 'email']
 ) {
   try {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) throw new Error("Missing GEMINI_API_KEY");
-
-    const ai = new GoogleGenAI({ apiKey });
+    const groq = getGroqClient();
 
     // Map tone to detailed descriptions for better AI understanding
     const toneDescriptions: Record<string, string> = {
@@ -83,7 +74,6 @@ Tone: ${toneDescription}.
 Subject line style hook. Clear value proposition.`
     };
 
-    // Build the JSON structure specification
     const platformKeys = platforms.map(p => `"${p}"`).join(', ');
     const selectedInstructions = platforms
       .map(p => platformInstructions[p])
@@ -94,7 +84,7 @@ Subject line style hook. Clear value proposition.`
 
 IMPORTANT: The user has selected a "${tone}" tone. All content you generate must reflect this tone: ${toneDescription}.
 
-Based only on the source content I provide below, generate a single, valid JSON object with the following keys: ${platformKeys}.
+Based only on the source content provided, generate a single, valid JSON object with the following keys: ${platformKeys}.
 
 Key Requirements:
 
@@ -103,25 +93,36 @@ ${selectedInstructions}
 Output Constraints:
 Return ONLY the raw, valid JSON object starting with { and ending with }.
 Do NOT include any introductory text, explanations, or markdown formatting like \`\`\`json ...\`\`\`
-Only include the platforms requested: ${platformKeys}
-`;
+Only include the platforms requested: ${platformKeys}`;
 
-    const prompt = `${systemPrompt}\n\nContent:\n${sourceText}`;
+    console.log('🚀 Sending request to Groq...');
 
-    const result = await ai.models.generateContent({
-      model: "gemini-2.0-flash",
-      contents: prompt,
+    const chatCompletion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
+      messages: [
+        {
+          role: "system",
+          content: systemPrompt,
+        },
+        {
+          role: "user",
+          content: `Content:\n${sourceText}`,
+        },
+      ],
+      temperature: 0.7,
+      max_tokens: 2048,
     });
 
-    // Extract text safely
-    let raw = extractText(result);
+    const raw = chatCompletion.choices?.[0]?.message?.content?.trim();
 
     if (!raw) {
-      console.error("Gemini raw result:", JSON.stringify(result, null, 2));
-      throw new Error("Empty response from Gemini");
+      console.error('❌ Groq raw result:', JSON.stringify(chatCompletion, null, 2));
+      throw new Error("Empty response from Groq");
     }
 
-    // Clean markdown fences
+    console.log('✅ Response received from Groq');
+
+    // Clean markdown fences if present
     const cleaned = raw
       .replace(/^```json/, "")
       .replace(/^```/, "")
@@ -130,45 +131,44 @@ Only include the platforms requested: ${platformKeys}
 
     const jsonMatch = cleaned.match(/\{[\s\S]*\}$/);
     if (!jsonMatch) {
-      console.error("Invalid AI output:", cleaned);
+      console.error('❌ Invalid AI output:', cleaned);
       throw new Error("AI did not return JSON");
     }
 
     const data = JSON.parse(jsonMatch[0]);
 
     // Validation - only validate fields that were requested
-    // Fixed: Check for 'twitter' key (not 'tweets')
     if (platforms.includes('twitter')) {
       if (!Array.isArray(data.twitter) || data.twitter.length < 1) {
-        console.error("Twitter data invalid:", data.twitter);
+        console.error('❌ Twitter data invalid:', data.twitter);
         throw new Error("Twitter content generation failed - expected array of tweets");
       }
     }
 
     if (platforms.includes('linkedin')) {
       if (typeof data.linkedin !== "string" || data.linkedin.length < 10) {
-        console.error("LinkedIn data invalid:", data.linkedin);
+        console.error('❌ LinkedIn data invalid:', data.linkedin);
         throw new Error("LinkedIn content generation failed");
       }
     }
 
     if (platforms.includes('email')) {
       if (typeof data.email !== "string" || data.email.length < 10) {
-        console.error("Email data invalid:", data.email);
+        console.error('❌ Email data invalid:', data.email);
         throw new Error("Email content generation failed");
       }
     }
 
     if (platforms.includes('instagram')) {
       if (typeof data.instagram !== "string" || data.instagram.length < 10) {
-        console.error("Instagram data invalid, using fallback");
+        console.error('❌ Instagram data invalid, using fallback');
         data.instagram = "Instagram caption generation failed.";
       }
     }
 
     if (platforms.includes('facebook')) {
       if (typeof data.facebook !== "string" || data.facebook.length < 10) {
-        console.error("Facebook data invalid, using fallback");
+        console.error('❌ Facebook data invalid, using fallback');
         data.facebook = "Facebook post generation failed.";
       }
     }
@@ -183,7 +183,7 @@ Only include the platforms requested: ${platformKeys}
 
     return result_data;
   } catch (err: any) {
-    console.error("Gemini error:", err);
+    console.error('❌ Groq error:', err);
     throw new Error(err.message || "Failed to generate content");
   }
 }
